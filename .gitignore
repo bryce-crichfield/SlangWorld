@@ -1,0 +1,7 @@
+/.vscode
+/exe
+/test.slasm
+
+/slap/bin
+/slim/bin
+/slap/source/parsing

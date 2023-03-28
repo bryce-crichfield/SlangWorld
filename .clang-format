@@ -1,0 +1,22 @@
+---
+BasedOnStyle: Microsoft
+Language: C
+---
+BasedOnStyle: Microsoft
+IndentWidth: 4
+Language: Cpp
+DerivePointerAlignment: false
+PointerAlignment: Left
+AlignAfterOpenBracket: DontAlign
+AlignArrayOfStructures: Left
+BreakBeforeBraces: Attach
+CompactNamespaces: true
+FixNamespaceComments: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+AllowShortFunctionsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+ColumnLimit: 120
+LambdaBodyIdentation: OuterScope
+---
+Language: Python
