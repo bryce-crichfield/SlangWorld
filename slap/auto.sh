@@ -34,14 +34,12 @@ Typecheck() {
 
 Grammar() {
     echo "Compiling the Slap grammar..."
-    antlr4 -Dlanguage=Python3 -no-visitor source/grammar/Slap.g4 -o source/parsing
-
-    # Remove the intermediate files ending in ".interp" or ".token"
-    pushd .
-    cd source/parsing
-    rm -f *.interp
-    rm -f *.tokens
-    popd
+    antlr4 -Dlanguage=Python3 source/grammar/Slap.g4
+    mkdir -p source/parsing
+    mv source/grammar/*.py source/parsing
+    touch source/parsing/__init__.py
+    find . -name "*.interp" -type f -delete
+    find . -name "*.tokens" -type f -delete
 }
 
 Clean() {
@@ -51,6 +49,7 @@ Clean() {
 }
 
 # Parse the command line arguments
+echo "From build.sh"
 while getopts "hbesgtc" opt; do
     case $opt in
         h)
@@ -62,11 +61,11 @@ while getopts "hbesgtc" opt; do
             exit 0
             ;;
         e)
-            Executeable
+            Executeable ${@:2}
             exit 0
             ;;
         s)
-            Script
+            Script ${@:2}
             exit 0
             ;;
         t)

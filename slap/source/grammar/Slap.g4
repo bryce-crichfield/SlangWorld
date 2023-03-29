@@ -3,11 +3,11 @@ grammar Slap;
 // Grammar Rules
 program: (section)* EOF;
 section: LABEL '{' (instruction)* '}';
-instruction: OPCODE (argument)* ';';
+instruction: OPCODE (argument)? ';';
 argument: REGISTER | LABEL | NUMBER;
 
 // Lexical Rules
-OPCODE: 'halt' 'noop' 'add' 'jump' 'loadi';
+OPCODE: 'halt' | 'noop' | 'add' | 'jump' | 'loadi';
 LABEL: [a-zA-Z_][a-zA-Z0-9_]*;
 REGISTER: '%'[0-9]+;
 NUMBER

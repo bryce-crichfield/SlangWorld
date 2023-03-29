@@ -1,0 +1,14 @@
+start {
+    loadi 0x01;
+    loadi 0x02;
+    jump main;
+}
+
+main {
+    add;
+    jump exit;
+}
+
+exit {
+    halt;
+}

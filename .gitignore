@@ -5,3 +5,4 @@
 /slap/bin
 /slim/bin
 /slap/source/parsing
+/slap/source/grammar/.antlr
