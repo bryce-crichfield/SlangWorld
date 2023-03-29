@@ -221,7 +221,36 @@ SlimError slim_block_split(SlimBlock* block, u32_t size);
 SlimError slim_block_merge(SlimBlock* block);
 
 // Debugging and Diagnostics -------------------------------------------------------------------------------------------
+#define SLIM_DEBUG_BUFFER_SIZE 1024
 
-void slim_machine_dump_stack(SlimMachine* machine);
-void slim_machine_dump_registers(SlimMachine* machine);
-void slim_machine_dump_memory(SlimMachine* machine);
+typedef struct SlimDebugContext SlimDebugContext;
+
+struct SlimDebugContext {
+    const char* output_path;
+    char buffer[SLIM_DEBUG_BUFFER_SIZE];
+    u16_t buffer_index;    
+    u8_t writes_stdout;
+};
+
+void slim_debug_init(const char* output_path, u8_t writes_stdout);
+void slim_debug_flush();
+void slim_debug_close();
+
+void slim_debug_printf(const char* format, ...);
+void slim_debug_hexdump(void* data, u32_t size, u32_t stride, u8_t is_sparse);
+
+#define slim_info(...) { \
+        slim_debug_printf("[INFO]\t");\
+        slim_debug_printf(__VA_ARGS__); \
+    }
+
+#define slim_warn(...) { \
+        slim_debug_printf("[WARN]\t");\
+        slim_debug_printf(__VA_ARGS__);\
+    }
+
+#define slim_error(...) {                                                                                                                                                                                                             \
+    slim_debug_printf("[ERROR]\t");                                                                                    \
+    slim_debug_printf(__VA_ARGS__);                                                                                    \
+    }
+

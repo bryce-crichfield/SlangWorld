@@ -1,5 +1,7 @@
 #include "slim.h"
 
+#include <stdarg.h>
+
 // Internal Routines ---------------------------------------------------------------------------------------------------
 
 SlimBytecode* slim_bytecode_load(const char* filename) {
@@ -7,7 +9,7 @@ SlimBytecode* slim_bytecode_load(const char* filename) {
 
     FILE* file = fopen(filename, "rb");
     if (file == NULL) {
-        printf("Failed to open file\n");
+        slim_error("Failed to open file\n");
         return NULL;
     }
 
@@ -15,14 +17,14 @@ SlimBytecode* slim_bytecode_load(const char* filename) {
     fseek(file, 0, SEEK_END);
     u32_t size = ftell(file);
     if (size % 9 != 0) {
-        printf("Invalid bytecode file\n");
+        slim_error("Invalid bytecode file\n");
         return NULL;
     }
 
     // Allocate memory for the bytecode
     u8_t* data = malloc(size);
     if (data == NULL) {
-        printf("Failed to allocate memory\n");
+        slim_error("Failed to allocate memory for bytecode\n");
         return NULL;
     }
 
@@ -171,12 +173,12 @@ SlimError ___slim_machine_free(SlimMachine* machine, u32_t address) {
 // Routines and Operations ---------------------------------------------------------------------------------------------
 
 void slim_routine_nop(SlimMachine* machine, SlimInstruction instruction) {
-    printf("NOP\n");
+    slim_info("[ROUTINE]\tNOP\n")
     return;
 }
 
 void slim_routine_halt(SlimMachine* machine, SlimInstruction instruction) {
-    printf("HALT\n");
+    slim_info("[ROUTINE]\tHALT\n")
     machine->flags.halt = 1;
     return;
 }
@@ -185,7 +187,7 @@ void slim_routine_loadi(SlimMachine* machine, SlimInstruction instruction) {
     SlimError error;
 
     u64_t value = (u64_t)instruction.arg1 << 32 | instruction.arg2;
-    printf("LOADI %lld\n", value);
+    slim_info("[ROUTINE]\tLOADI %lld\n", value)
 
     error = ___slim_machine_push(machine, value);
 
@@ -197,7 +199,7 @@ void slim_routine_loadi(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_loadr(SlimMachine* machine, SlimInstruction instruction) {
-    printf("LOADR %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tLOADR %d\n", instruction.arg1)
 
     u32_t index = instruction.arg1;
 
@@ -208,7 +210,7 @@ void slim_routine_loadr(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_loadm(SlimMachine* machine, SlimInstruction instruction) {
-    printf("LOADM %x, %x\n", instruction.arg1, instruction.arg2);
+    slim_info("[ROUTINE]\tLOADM %d, %d\n", instruction.arg1, instruction.arg2)
 
     u64_t address = 0;
     // TODO: Which arg is it?
@@ -225,7 +227,7 @@ void slim_routine_loadm(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_drop(SlimMachine* machine, SlimInstruction instruction) {
-    printf("DROP\n");
+    slim_info("[ROUTINE]\tDROP\n")
 
     SlimError error = ___slim_machine_pop(machine, NULL);
     slim_machine_except(machine, error);
@@ -234,7 +236,7 @@ void slim_routine_drop(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_storer(SlimMachine* machine, SlimInstruction instruction) {
-    printf("STORER %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tSTORER %d\n", instruction.arg1)
 
     u32_t index = instruction.arg1;
     SlimError error;
@@ -246,7 +248,7 @@ void slim_routine_storer(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_storem(SlimMachine* machine, SlimInstruction instruction) {
-    printf("STOREM %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tSTOREM %d\n", instruction.arg1);
 
     u64_t address;
     u64_t offset;
@@ -264,7 +266,7 @@ void slim_routine_storem(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_dup(SlimMachine* machine, SlimInstruction instruction) {
-    printf("DUP\n");
+    slim_info("[ROUTINE]\tDUP\n");
 
     u64_t value;
     SlimError error;
@@ -282,7 +284,8 @@ void slim_routine_dup(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_swap(SlimMachine* machine, SlimInstruction instruction) {
-    printf("SWAP\n");
+    slim_info("[ROUTINE]\tSWAP\n");
+
     u64_t a;
     u64_t b;
     SlimError error;
@@ -303,7 +306,7 @@ void slim_routine_swap(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_rot(SlimMachine* machine, SlimInstruction instruction) {
-    printf("ROT\n");
+    slim_info("[ROUTINE]\tROT\n");
 
     u64_t a;
     u64_t b;
@@ -332,7 +335,7 @@ void slim_routine_rot(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_add(SlimMachine* machine, SlimInstruction instruction) {
-    printf("ADD\n");
+    slim_info("[ROUTINE]\tADD\n");
 
     u64_t a;
     u64_t b;
@@ -353,7 +356,7 @@ void slim_routine_add(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_sub(SlimMachine* machine, SlimInstruction instruction) {
-    printf("SUB\n");
+    slim_info("[ROUTINE]\tSUB\n");
 
     u64_t a;
     u64_t b;
@@ -374,7 +377,7 @@ void slim_routine_sub(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_mul(SlimMachine* machine, SlimInstruction instruction) {
-    printf("MUL\n");
+    slim_info("[ROUTINE]\tMUL\n");
 
     u64_t a;
     u64_t b;
@@ -395,7 +398,7 @@ void slim_routine_mul(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_div(SlimMachine* machine, SlimInstruction instruction) {
-    printf("DIV\n");
+    slim_info("[ROUTINE]\tDIV\n");
 
     u64_t a;
     u64_t b;
@@ -436,7 +439,7 @@ void slim_routine_divf(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_alloc(SlimMachine* machine, SlimInstruction instruction) {
-    printf("ALLOC %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tALLOC %d\n", instruction.arg1);
 
     u32_t size = instruction.arg1;
     SlimError error;
@@ -453,7 +456,7 @@ void slim_routine_alloc(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_free(SlimMachine* machine, SlimInstruction instruction) {
-    printf("FREE %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tFREE %d\n", instruction.arg1);
 
     SlimError error = ___slim_machine_free(machine, instruction.arg1);
     slim_machine_except(machine, error);
@@ -462,14 +465,14 @@ void slim_routine_free(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_jmp(SlimMachine* machine, SlimInstruction instruction) {
-    printf("JUMP %d\n", instruction.arg2);
+    slim_info("[ROUTINE]\tJUMP %d\n", instruction.arg2);
 
     u32_t address = instruction.arg2;
     machine->instruction_pointer = address;
 }
 
 void slim_routine_jne(SlimMachine* machine, SlimInstruction instruction) {
-    printf("JNE %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tJNE %d\n", instruction.arg1);
 
     u64_t value;
     SlimError error = ___slim_machine_pop(machine, &value);
@@ -481,7 +484,7 @@ void slim_routine_jne(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_je(SlimMachine* machine, SlimInstruction instruction) {
-    printf("JE %d\n", instruction.arg1);
+    slim_info("[ROUTINE]\tJE %d\n", instruction.arg1);
 
     u64_t value;
     SlimError error = ___slim_machine_pop(machine, &value);
@@ -518,7 +521,7 @@ SlimInstruction slim_machine_fetch(SlimMachine* machine) {
     instruction.arg1 = arg1;
     instruction.arg2 = arg2;
 
-    printf("Fetch: 0x%x 0x%x 0x%x\n", instruction.opcode, instruction.arg1, instruction.arg2);
+    slim_info("[FETCH]\t0x%x 0x%x 0x%x\n", instruction.opcode, instruction.arg1, instruction.arg2);
 
     machine->instruction_pointer += 9;
 
@@ -625,7 +628,7 @@ void slim_machine_launch(SlimMachine* machine) {
         SlimRoutine routine = slim_machine_decode(machine, instruction);
         slim_machine_execute(machine, routine, instruction);
     }
-    printf("Machine halted\n");
+    slim_info("[LAUNCH]\tMachine halted\n");
 }
 // Block Management ----------------------------------------------------------------------------------------------------
 SlimBlock* slim_block_create(u32_t start, u32_t end) {
@@ -688,31 +691,79 @@ SlimError slim_block_merge(SlimBlock* block) {
     return SL_ERROR_NONE;
 }
 // Debugging -----------------------------------------------------------------------------------------------------------
-void slim_machine_dump_stack(SlimMachine* machine) {
-    printf("Stack:\n");
-    for (u32_t i = 0; i < SLIM_MACHINE_STACK_SIZE; i++) {
-        printf("%d: %llu\n", i, machine->stack[i]);
-    }
+SlimDebugContext *slim_debug_context;
 
-    printf("Stack Pointer: %llu\n", (s64_t)machine->stack_pointer);
-
-    printf("\n");
+void slim_debug_init(const char* output_path, u8_t writes_stdout) {
+    slim_debug_context = malloc(sizeof(SlimDebugContext));
+    slim_debug_context->output_path = output_path;
+    slim_debug_context->buffer_index = 0;
+    slim_debug_context->writes_stdout = writes_stdout;
 }
 
-void slim_machine_dump_registers(SlimMachine* machine) {
-    printf("Registers:\n");
-    for (u32_t i = 0; i < SLIM_MACHINE_REGISTERS; i++) {
-        printf("%d: %llu\n", i, machine->registers[i]);
-    }
-
-    printf("\n");
+void slim_debug_flush() {
+    FILE *file = fopen(slim_debug_context->output_path, "a");
+    fwrite(slim_debug_context->buffer, 1, slim_debug_context->buffer_index, file);
+    fclose(file);
+    slim_debug_context->buffer_index = 0;
 }
 
-void slim_machine_dump_memory(SlimMachine* machine) {
-    printf("Memory:\n");
-    for (u32_t i = 0; i < SLIM_MACHINE_MEMORY_SIZE; i++) {
-        printf("%d: %llu\n", i, machine->memory[i]);
+void slim_debug_close() {
+    slim_debug_flush();
+    free(slim_debug_context);
+}
+
+void slim_debug_printf(const char* format, ...) {
+    if (slim_debug_context == NULL) {
+        return;
     }
 
-    printf("\n");
+    va_list args;
+    va_start(args, format);
+    slim_debug_context->buffer_index += vsprintf(
+        slim_debug_context->buffer + slim_debug_context->buffer_index, 
+        format, 
+        args);
+    va_end(args);
+
+    if (slim_debug_context->writes_stdout) {
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+    }
+
+    if (slim_debug_context->buffer_index > SLIM_DEBUG_BUFFER_SIZE) {
+        slim_debug_flush();
+    }
+}
+
+
+void slim_debug_hexdump(void* data, u32_t length, u32_t stride, u8_t is_sparse) {
+    slim_debug_printf("\nHexdump (%d bytes):\n", length);
+
+    // Print Header Row
+    slim_debug_printf("ROW    \tBYTE\t");
+    for (u8_t i = 0; i < stride; i++) {
+        slim_debug_printf("0%x ", i);
+    }
+    slim_debug_printf("\n");
+    
+    // Print the Contents
+    for (int row = 0; row < length; row++) {
+        // Print Index and Byte Offset
+        slim_debug_printf("%04d\t", row);
+        slim_debug_printf("0x%04hhX\t", row * stride);
+        
+        // Print the Bytes
+        for (int byte = stride - 1; byte >= 0; byte--) {
+            u8_t value = ((u8_t*)data)[row * stride + byte];
+            if (is_sparse && value == 0) {
+                slim_debug_printf(".. ");
+            } else {
+                slim_debug_printf("0%x ", value);
+            }
+        }
+        slim_debug_printf("\n");
+    }
+    slim_debug_printf("\n");
 }
