@@ -2,11 +2,11 @@
 
 void slim_debug_machine_dump_stack(SlimMachine* machine) {
     printf("Stack:\n");
-    for (u32_t i = 0; i < SLIM_MACHINE_STACK_SIZE; i++) {
-        printf("%d: %llu\n", i, machine->stack[i]);
+    for (u32_t i = 0; i < SLIM_MACHINE_OPERAND_STACK_SIZE; i++) {
+        printf("%d: %llu\n", i, machine->operand_stack[i]);
     }
 
-    printf("Stack Pointer: %llu\n", (s64_t)machine->stack_pointer);
+    printf("Stack Pointer: %llu\n", (s64_t)machine->operand_stack_pointer);
 
     printf("\n");
 }
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     slim_debug_machine_dump_registers(machine);
     slim_debug_machine_dump_memory(machine);
 
-    slim_debug_hexdump(machine->stack, SLIM_MACHINE_STACK_SIZE, sizeof(u64_t), 1);
+    slim_debug_hexdump(machine->operand_stack, SLIM_MACHINE_OPERAND_STACK_SIZE, sizeof(u64_t), 1);
 
     slim_debug_close();
 }

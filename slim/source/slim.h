@@ -17,7 +17,8 @@ typedef float f32_t;
 typedef double f64_t;
 // ---------------------------------------------------------------------------------------------------------------------
 
-#define SLIM_MACHINE_STACK_SIZE 8
+#define SLIM_MACHINE_OPERAND_STACK_SIZE 8
+#define SLIM_MACHINE_CALL_STACK_SIZE 8
 #define SLIM_MACHINE_REGISTERS 4
 #define SLIM_MACHINE_MEMORY_SIZE 16
 
@@ -59,6 +60,7 @@ enum SlimError {
 
 typedef struct SlimMachine SlimMachine;
 typedef struct SlimMachineFlags SlimMachineFlags;
+typedef struct SlimCallStackFrame SlimCallStackFrame;
 typedef struct SlimInstruction SlimInstruction;
 typedef struct SlimBytecode SlimBytecode;
 typedef enum SlimOpcode SlimOpcode;
@@ -100,6 +102,9 @@ enum SlimOpcode {
     SL_OPCODE_JMP       = 0x50,     // Jump to specified address                                JMP ADDR
     SL_OPCODE_JNE       = 0x51,     // Jump to specified address if stack top not equal to zero JNE ADDR
     SL_OPCODE_JE        = 0x52,     // Jump to specified address if stack top equal to zero     JE ADDR
+
+    SL_OPCODE_CALL      = 0x63,     // Call a function at the address from the top of stack     CALL 
+    SL_OPCODE_RET       = 0x64,     // Return from a function                                   RET
     // clang-format on
 };
 
@@ -152,6 +157,8 @@ void slim_routine_jmp(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_jne(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_je(SlimMachine* machine, SlimInstruction instruction);
 
+void slim_routine_call(SlimMachine* machine, SlimInstruction instruction);
+void slim_routine_ret(SlimMachine* machine, SlimInstruction instruction);
 // State and Data - Machine, Errors, and Memory ------------------------------------------------------------------------
 
 struct SlimMachineFlags {
@@ -170,11 +177,13 @@ struct SlimMachine {
 
     // We will use a 32-bit address space which is realistically too large.  In order to access the full 32-bits,
     // we will need to implement a page table.  For now, this is entirely ignored.
-    u32_t stack_pointer;
+    u32_t operand_stack_pointer;
+    u32_t call_stack_pointer;
     u32_t instruction_pointer;
 
     // We will use an unsigned 64-bit value to stand in for all values.  It is up to the user to ensure type safety.
-    u64_t stack[SLIM_MACHINE_STACK_SIZE];
+    u64_t operand_stack[SLIM_MACHINE_OPERAND_STACK_SIZE];                // The actual values are stored here
+    SlimCallStackFrame call_stack[SLIM_MACHINE_CALL_STACK_SIZE];         // The size of the current call is stored here
     u64_t registers[SLIM_MACHINE_REGISTERS];
 
     SlimBlock* blocks;
@@ -182,6 +191,11 @@ struct SlimMachine {
 
     u8_t* bytecode;
     u32_t bytecode_size;
+};
+
+struct SlimCallStackFrame {
+    u32_t instruction_pointer;
+    u32_t size;
 };
 
 // Fetch, Decode, Execute
@@ -205,6 +219,8 @@ SlimError ___slim_machine_read(SlimMachine* machine, u32_t address, u32_t offset
 SlimError ___slim_machine_write(SlimMachine* machine, u32_t address, u32_t offset);
 SlimError ___slim_machine_alloc(SlimMachine* machine, u32_t size, u32_t* address);
 SlimError ___slim_machine_free(SlimMachine* machine, u32_t address);
+SlimError ___slim_machine_call(SlimMachine* machine, u32_t address);
+SlimError ___slim_machine_ret(SlimMachine* machine);
 
 // Block and Memory Management -----------------------------------------------------------------------------------------
 

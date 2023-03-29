@@ -48,23 +48,23 @@ void slim_bytecode_destroy(SlimBytecode* bytecode) {
 }
 
 SlimError ___slim_machine_push(SlimMachine* machine, u64_t value) {
-    if (machine->stack_pointer >= SLIM_MACHINE_STACK_SIZE) {
+    if (machine->operand_stack_pointer >= SLIM_MACHINE_OPERAND_STACK_SIZE) {
         return SL_ERROR_STACK_OVERFLOW;
     }
 
-    machine->stack[machine->stack_pointer++] = value;
+    machine->operand_stack[machine->operand_stack_pointer++] = value;
 
     return SL_ERROR_NONE;
 }
 
 SlimError ___slim_machine_pop(SlimMachine* machine, u64_t* value) {
-    if (machine->stack_pointer == 0) {
+    if (machine->operand_stack_pointer == 0) {
         return SL_ERROR_STACK_UNDERFLOW;
     }
 
-    u64_t top = machine->stack[machine->stack_pointer - 1];
-    machine->stack[machine->stack_pointer - 1] = 0;
-    machine->stack_pointer--;
+    u64_t top = machine->operand_stack[machine->operand_stack_pointer - 1];
+    machine->operand_stack[machine->operand_stack_pointer - 1] = 0;
+    machine->operand_stack_pointer--;
     *value = top;
 
     return SL_ERROR_NONE;
@@ -169,6 +169,41 @@ SlimError ___slim_machine_free(SlimMachine* machine, u32_t address) {
     }
 
     return SL_ERROR_BLOCK_FREE;
+}
+
+SlimError ___slim_machine_call(SlimMachine* machine, u32_t address) {
+    machine->call_stack_pointer++;
+    if (machine->call_stack_pointer >= SLIM_MACHINE_CALL_STACK_SIZE) {
+        return SL_ERROR_STACK_OVERFLOW;
+    }
+
+    machine->call_stack[machine->call_stack_pointer].instruction_pointer = address;
+
+    return SL_ERROR_NONE;
+}
+
+SlimError ___slim_machine_ret(SlimMachine* machine) {
+    u32_t ret_address = machine->call_stack[machine->call_stack_pointer].instruction_pointer;
+    u16_t count = machine->call_stack[machine->call_stack_pointer].size;
+    machine->call_stack[machine->call_stack_pointer].instruction_pointer = 0;
+    machine->call_stack[machine->call_stack_pointer].size = 0;
+
+    machine->call_stack_pointer--;
+    if (machine->call_stack_pointer < 0) {
+        return SL_ERROR_STACK_UNDERFLOW;
+    }
+
+    machine->instruction_pointer = ret_address;
+
+    for (u16_t i = 0; i < count; i++) {
+        u64_t value;
+        SlimError error = ___slim_machine_pop(machine, &value);
+        if (error != SL_ERROR_NONE) {
+            return error;
+        }
+    }
+
+    return SL_ERROR_NONE;
 }
 // Routines and Operations ---------------------------------------------------------------------------------------------
 
@@ -495,6 +530,30 @@ void slim_routine_je(SlimMachine* machine, SlimInstruction instruction) {
     }
 }
 
+void slim_routine_call(SlimMachine* machine, SlimInstruction instruction) {
+    u64_t address;
+    SlimError error;
+
+    error = ___slim_machine_pop(machine, &address);
+    slim_machine_except(machine, error);
+
+    slim_info("[ROUTINE]\tCALL %d\n", address);
+
+    error = ___slim_machine_call(machine, address);
+    slim_machine_except(machine, error);
+
+    return;
+}
+
+void slim_routine_ret(SlimMachine* machine, SlimInstruction instruction) {
+    slim_info("[ROUTINE]\tRET\n");
+
+    SlimError error = ___slim_machine_ret(machine);
+    slim_machine_except(machine, error);
+
+    return;
+}
+
 // Fetch, Decode, Execute ----------------------------------------------------------------------------------------------
 SlimInstruction slim_machine_fetch(SlimMachine* machine) {
     SlimInstruction instruction;
@@ -554,6 +613,8 @@ SlimRoutine slim_machine_decode(SlimMachine* machine, SlimInstruction instructio
     case SL_OPCODE_JMP: return slim_routine_jmp; break;
     case SL_OPCODE_JNE: return slim_routine_jne; break;
     case SL_OPCODE_JE: return slim_routine_je; break;
+    case SL_OPCODE_CALL: return slim_routine_call; break;
+    case SL_OPCODE_RET: return slim_routine_ret; break;
     default: return NULL; break;
     }
 }
@@ -562,7 +623,7 @@ void slim_machine_execute(SlimMachine* machine, SlimRoutine routine, SlimInstruc
     if (routine) {
         routine(machine, instruction);
     } else {
-        printf("Invalid instruction\n");
+        slim_error("[DECODE]\tInvalid instruction\n");
         machine->flags.error = 1;
     }
 }
@@ -586,8 +647,13 @@ void slim_machine_destroy(SlimMachine* machine) {
 }
 
 void slim_machine_clear(SlimMachine* machine) {
-    for (u32_t i = 0; i < SLIM_MACHINE_STACK_SIZE; i++) {
-        machine->stack[i] = 0;
+    for (u32_t i = 0; i < SLIM_MACHINE_OPERAND_STACK_SIZE; i++) {
+        machine->operand_stack[i] = 0;
+    }
+
+    for (u32_t i = 0; i < SLIM_MACHINE_CALL_STACK_SIZE; i++) {
+        machine->call_stack[i].instruction_pointer = 0;
+        machine->call_stack[i].size = 0;
     }
 
     for (u32_t i = 0; i < SLIM_MACHINE_REGISTERS; i++) {
@@ -609,7 +675,8 @@ void slim_machine_clear(SlimMachine* machine) {
     machine->flags.halt = 0;
 
     // Reset Pointers
-    machine->stack_pointer = 0;
+    machine->operand_stack_pointer = 0;
+    machine->call_stack_pointer = 0;
     machine->instruction_pointer = 0;
 
     // Reset Blocks
@@ -736,7 +803,6 @@ void slim_debug_printf(const char* format, ...) {
         slim_debug_flush();
     }
 }
-
 
 void slim_debug_hexdump(void* data, u32_t length, u32_t stride, u8_t is_sparse) {
     slim_debug_printf("\nHexdump (%d bytes):\n", length);
