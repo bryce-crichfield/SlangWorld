@@ -1,0 +1,5 @@
+- [SLIM] Add bytecode table loading and data structures to slim_machine
+- [SLIM] Add native code hooking to slim_machine and compilation
+- [SLIM] Add debug and log outputting to files
+- [SLIM] Add proper cli and command facade 
+- [SLIM] Add usage stack and subroutine branching to slim_machine

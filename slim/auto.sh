@@ -40,7 +40,7 @@ while getopts "hbec" opt; do
             exit 0
             ;;
         e)
-            Executeable
+            Executeable ${@:2}
             exit 0
             ;;
         c)
