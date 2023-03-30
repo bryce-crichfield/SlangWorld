@@ -50,9 +50,11 @@ int main(int argc, char** argv) {
 
     slim_machine_load(machine, bytecode->data, bytecode->bytesize);
     slim_machine_launch(machine);
-    slim_debug_machine_dump_stack(machine);
-    slim_debug_machine_dump_registers(machine);
-    slim_debug_machine_dump_memory(machine);
+
+    // TODO: Rewrite these using hex dump
+    // slim_debug_machine_dump_stack(machine);
+    // slim_debug_machine_dump_registers(machine);
+    // slim_debug_machine_dump_memory(machine);
 
     slim_debug_hexdump(machine->operand_stack, SLIM_MACHINE_OPERAND_STACK_SIZE, sizeof(u64_t), 1);
 

@@ -1,3 +1,4 @@
+import struct
 from antlr4 import *
 from parsing.SlapLexer import SlapLexer
 from parsing.SlapParser import SlapParser
@@ -41,6 +42,12 @@ define_opcode("MUL", 0x32, 0)
 define_opcode("DIV", 0x33, 0)
 define_opcode("MOD", 0x34, 0)
 
+define_opcode("ADDF", 0x35, 0)
+define_opcode("SUBF", 0x36, 0)
+define_opcode("MULF", 0x37, 0)
+define_opcode("DIVF", 0x38, 0)
+define_opcode("MODF", 0x39, 0)
+
 define_opcode("ALLOC", 0x40, 1)
 define_opcode("FREE", 0x41, 0)
 
@@ -50,6 +57,9 @@ define_opcode("JEQ", 0x52, 1)
 
 define_opcode("CALL", 0x60, 1)
 define_opcode("RET", 0x61, 0)
+
+define_opcode("ITOF", 0x70, 0)
+define_opcode("FTOI", 0x71, 0)
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass
 class SectionRecord:
@@ -105,17 +115,45 @@ class SlapAssembler(SlapListener):
         self.symbol_table = symbol_table
         self.byte_array = bytearray()
 
-    def write_number(self, number):
+    def parse_number(self, string: str):
+        if string.startswith("0x"):
+            return int(string[2:], 16)
+        elif string.startswith("0b"):
+            return int(string[2:], 2)
+        elif string.startswith("0f"):
+            return float(string[2:])
+        elif string.startswith("0i"):
+            return int(string[2:])
+        else:
+            raise Exception("Invalid number format")
+    
+    def write_integer(self, integer):
         bytes = [0] * 8
         for i in range(8):
-            bytes[i] = number & 0xFF
-            number >>= 8
+            bytes[i] = integer & 0xFF
+            integer >>= 8
 
         # Reverse the bytes
         bytes.reverse()
+        
         for byte in bytes:
             self.byte_array.append(byte)
 
+    def write_float(self, float):
+        # Write the provided float as a 64-bit IEEE 754 double-precision floating point number
+        # https://en.wikipedia.org/wiki/Double-precision_floating-point_format
+
+        # Convert the float to a 64-bit integer
+        integer = struct.unpack("Q", struct.pack("d", float))
+        self.write_integer(integer[0])
+        
+    def write_number(self, number):
+        # If number is a float then write it as a float
+        if isinstance(number, float):
+            self.write_float(number)
+        else:
+            self.write_integer(number)
+    
     def enterInstruction(self, ctx: SlapParser.InstructionContext):
         opcode = ctx.OPCODE().getText()
         opcode_def = match_opcode(opcode)
@@ -129,22 +167,10 @@ class SlapAssembler(SlapListener):
 
     def enterArgument(self, ctx: SlapParser.ArgumentContext):
         if ctx.LABEL():
-            byte_index = ctx.byte_index
-            self.write_number(byte_index)
-
+            self.write_number(ctx.byte_index)
         elif ctx.NUMBER():
-            string = ctx.NUMBER().getText()
-            number = 0
-
-            if string.startswith("0x"):
-                number = int(string[2:], 16)
-            elif string.startswith("0b"):
-                number = int(string[2:], 2)
-            elif string.startswith("0f"):
-                number = float(string[2:])
-            else:
-                number = int(string)
-
+            text = ctx.NUMBER().getText()
+            number = self.parse_number(text)
             self.write_number(number)
         else:
             raise Exception("Invalid argument")

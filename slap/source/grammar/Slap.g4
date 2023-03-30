@@ -24,6 +24,11 @@ OPCODE
     | 'mul'
     | 'div'
     | 'mod'
+    | 'addf'
+    | 'subf'
+    | 'mulf'
+    | 'divf'
+    | 'modf'
     | 'alloc'
     | 'free'
     | 'jmp'
@@ -31,6 +36,8 @@ OPCODE
     | 'jeq'
     | 'call'
     | 'ret'
+    | 'ftoi'
+    | 'itof'
     ;
     
 LABEL: [a-zA-Z_][a-zA-Z0-9_]*;
@@ -42,5 +49,5 @@ NUMBER
     | '0i' [0-9]+
     ;
 
-COMMENT : '//' ~[\r]* -> skip;
+COMMENT : '//' ~[\r\n]* -> skip;
 WHITESPACE : [ \t\r\n]+ -> skip;

@@ -88,7 +88,7 @@ enum SlimOpcode {
     SL_OPCODE_SUB       = 0x31,     // Subtract the top two values on the stack as integers     SUBI
     SL_OPCODE_MUL       = 0x32,     // Multiply the top two values on the stack as integers     MULI
     SL_OPCODE_DIV       = 0x33,     // Divide the top two values on the stack as integers       DIVI
-    SL_OPCODE_MODI      = 0x34,     // Modulo the top two values on the stack as integers       MODI
+    SL_OPCODE_MOD       = 0x34,     // Modulo the top two values on the stack as integers       MODI
     
     SL_OPCODE_ADDF      = 0x35,     // Add the top two values on the stack as floats            ADDF
     SL_OPCODE_SUBF      = 0x36,     // Subtract the top two values on the stack as floats       SUBF
@@ -105,6 +105,9 @@ enum SlimOpcode {
 
     SL_OPCODE_CALL      = 0x60,     // Call a function at the address from the top of stack     CALL 
     SL_OPCODE_RET       = 0x61,     // Return from a function                                   RET
+
+    SL_OPCODE_ITOF      = 0x70,     // Convert the top of the stack from integer to float       ITOF
+    SL_OPCODE_FTOI      = 0x71,     // Convert the top of the stack from float to integer       FTOI
     // clang-format on
 };
 
@@ -144,11 +147,13 @@ void slim_routine_add(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_sub(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_mul(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_div(SlimMachine* machine, SlimInstruction instruction);
+void slim_routine_mod(SlimMachine* machine, SlimInstruction instruction);
 
 void slim_routine_addf(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_subf(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_mulf(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_divf(SlimMachine* machine, SlimInstruction instruction);
+void slim_routine_modf(SlimMachine* machine, SlimInstruction instruction);
 
 void slim_routine_alloc(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_free(SlimMachine* machine, SlimInstruction instruction);
@@ -159,6 +164,9 @@ void slim_routine_je(SlimMachine* machine, SlimInstruction instruction);
 
 void slim_routine_call(SlimMachine* machine, SlimInstruction instruction);
 void slim_routine_ret(SlimMachine* machine, SlimInstruction instruction);
+
+void slim_routine_ftoi(SlimMachine* machine, SlimInstruction instruction);
+void slim_routine_itof(SlimMachine* machine, SlimInstruction instruction);
 // State and Data - Machine, Errors, and Memory ------------------------------------------------------------------------
 
 struct SlimMachineFlags {

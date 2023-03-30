@@ -1,8 +1,5 @@
 ---
 BasedOnStyle: Microsoft
-Language: C
----
-BasedOnStyle: Microsoft
 IndentWidth: 4
 Language: Cpp
 DerivePointerAlignment: false
@@ -17,6 +14,3 @@ AllowShortFunctionsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 ColumnLimit: 120
-LambdaBodyIdentation: OuterScope
----
-Language: Python

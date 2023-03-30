@@ -1,4 +1,24 @@
 main {
-
+//  call testFloatArith;
+    call testIntegerArith;
     halt;
+}
+
+// testFloatArith {
+//     loadi 0f3.0;
+//     loadi 0f1.0;
+//     divf;
+//     loadi 0f2.0;
+//     addf;
+//     ret;
+// }
+
+testIntegerArith {
+    loadi 0f2.0;
+    loadi 0f0.5;
+    mulf;
+    ftoi;
+    loadi 0i2;
+    add;
+    ret;
 }
