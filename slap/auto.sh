@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+SLAP_ROOT=$(pwd)
+
 Help() {
     echo "-h : Display this help message"
     echo "-b : Build the project into an executable"
@@ -34,7 +36,8 @@ Typecheck() {
 
 Grammar() {
     echo "Compiling the Slap grammar..."
-    antlr4 -Dlanguage=Python3 source/grammar/Slap.g4
+    java -jar antlr4.12.0-complete.jar -Dlanguage=Python3 source/grammar/Slap.g4
+    echo "Moving the generated files..."
     mkdir -p source/parsing
     mv source/grammar/*.py source/parsing
     touch source/parsing/__init__.py

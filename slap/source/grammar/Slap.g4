@@ -7,7 +7,32 @@ instruction: OPCODE (argument)? ';';
 argument: REGISTER | LABEL | NUMBER;
 
 // Lexical Rules
-OPCODE: 'halt' | 'noop' | 'add' | 'jump' | 'loadi';
+OPCODE
+    : 'halt' 
+    | 'noop' 
+    | 'loadi'
+    | 'loadr'
+    | 'loadm'
+    | 'drop'
+    | 'storer'
+    | 'storem'
+    | 'dup'
+    | 'swap'
+    | 'rot'
+    | 'add'
+    | 'sub'
+    | 'mul'
+    | 'div'
+    | 'mod'
+    | 'alloc'
+    | 'free'
+    | 'jmp'
+    | 'jne'
+    | 'jeq'
+    | 'call'
+    | 'ret'
+    ;
+    
 LABEL: [a-zA-Z_][a-zA-Z0-9_]*;
 REGISTER: '%'[0-9]+;
 NUMBER
