@@ -15,7 +15,6 @@ class OpcodeDefintion:
 
 OPCODE_TABLE = {}
 
-
 def define_opcode(name, byte, argument_count):
     OPCODE_TABLE[name] = OpcodeDefintion(name, byte, argument_count)
 
@@ -24,14 +23,33 @@ def match_opcode(opcode: str) -> OpcodeDefintion:
 
 define_opcode("NOOP", 0x00, 0)
 define_opcode("HALT", 0x01, 0)
+
 define_opcode("LOADI", 0x10, 1)
 define_opcode("LOADR", 0x11, 1)
 define_opcode("LOADM", 0x12, 1)
 define_opcode("DROP", 0x13, 0)
+define_opcode("STORER", 0x14, 1)
+define_opcode("STOREM", 0x15, 0)
+
+define_opcode("DUP", 0x20, 0)
+define_opcode("SWAP", 0x21, 0)
+define_opcode("ROT", 0x22, 0)
 
 define_opcode("ADD", 0x30, 0)
+define_opcode("SUB", 0x31, 0)
+define_opcode("MUL", 0x32, 0)
+define_opcode("DIV", 0x33, 0)
+define_opcode("MOD", 0x34, 0)
 
-define_opcode("JUMP", 0x50, 1)
+define_opcode("ALLOC", 0x40, 1)
+define_opcode("FREE", 0x41, 0)
+
+define_opcode("JMP", 0x50, 1)
+define_opcode("JNE", 0x51, 1)
+define_opcode("JEQ", 0x52, 1)
+
+define_opcode("CALL", 0x60, 1)
+define_opcode("RET", 0x61, 0)
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass
 class SectionRecord:
@@ -42,7 +60,7 @@ class SectionRecord:
 
 # ----------------------------------------------------------------------------------------------------------------------
 class SlapSymbolTabulator(SlapListener):
-    """Tabulates section symbols and produces a symbol table [String -> Section]"""
+    """Tabulates section symbols, native symbols, etcs and produces a virtual symbol table [String -> Section]"""
 
     def __init__(self):
         self.symbol_table = {}
@@ -67,7 +85,7 @@ class SlapSymbolTabulator(SlapListener):
 
 # ----------------------------------------------------------------------------------------------------------------------
 class SlapSymbolResolver(SlapListener):
-    """Resolves named arguments to their corresponding byte index from the symbol table"""
+    """Resolves named arguments in the instructions to their corresponding byte index from the virtual symbol table"""
 
     def __init__(self, symbol_table):
         self.symbol_table = symbol_table
@@ -81,7 +99,7 @@ class SlapSymbolResolver(SlapListener):
 
 # ----------------------------------------------------------------------------------------------------------------------
 class SlapAssembler(SlapListener):
-    """Assembles the program into a byte array"""
+    """Assembles the program into a byte array by generating the byte code for each instruction"""
 
     def __init__(self, symbol_table):
         self.symbol_table = symbol_table
@@ -134,6 +152,10 @@ class SlapAssembler(SlapListener):
 
 # ----------------------------------------------------------------------------------------------------------------------
 def main():
+    if len(sys.argv) != 3:
+        print("Usage: slap <input file> <output file>")
+        return
+
     input = FileStream(sys.argv[1])
     lexer = SlapLexer(input)
     stream = CommonTokenStream(lexer)
@@ -157,7 +179,7 @@ def main():
         print(f"{i:04x} {bytes.hex()}")
 
     # Write the assembled program to a file
-    with open("out.bin", "wb") as f:
+    with open(sys.argv[2], "wb") as f:
         f.write(assembler.byte_array)
 # ----------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":

@@ -6,3 +6,5 @@
 /slim/bin
 /slap/source/parsing
 /slap/source/grammar/.antlr
+/slap/antlr4.12.0-complete.jar
+/slim/test.log

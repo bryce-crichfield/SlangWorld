@@ -177,8 +177,9 @@ SlimError ___slim_machine_call(SlimMachine* machine, u32_t address) {
         return SL_ERROR_STACK_OVERFLOW;
     }
 
-    machine->call_stack[machine->call_stack_pointer].instruction_pointer = address;
-
+    machine->call_stack[machine->call_stack_pointer].instruction_pointer = machine->instruction_pointer;
+    machine->call_stack[machine->call_stack_pointer].size = 0;
+    machine->instruction_pointer = address;
     return SL_ERROR_NONE;
 }
 
@@ -397,10 +398,10 @@ void slim_routine_sub(SlimMachine* machine, SlimInstruction instruction) {
     u64_t b;
     SlimError error;
 
-    error = ___slim_machine_pop(machine, &a);
+    error = ___slim_machine_pop(machine, &b);
     slim_machine_except(machine, error);
 
-    error = ___slim_machine_pop(machine, &b);
+    error = ___slim_machine_pop(machine, &a);
     slim_machine_except(machine, error);
 
     u64_t result = a - b;
@@ -439,10 +440,10 @@ void slim_routine_div(SlimMachine* machine, SlimInstruction instruction) {
     u64_t b;
     SlimError error;
 
-    error = ___slim_machine_pop(machine, &a);
+    error = ___slim_machine_pop(machine, &b);
     slim_machine_except(machine, error);
 
-    error = ___slim_machine_pop(machine, &b);
+    error = ___slim_machine_pop(machine, &a);
     slim_machine_except(machine, error);
 
     u64_t result = a / b;
@@ -531,15 +532,10 @@ void slim_routine_je(SlimMachine* machine, SlimInstruction instruction) {
 }
 
 void slim_routine_call(SlimMachine* machine, SlimInstruction instruction) {
-    u64_t address;
-    SlimError error;
+    slim_info("[ROUTINE]\tCALL %x\n", instruction.arg2);
 
-    error = ___slim_machine_pop(machine, &address);
-    slim_machine_except(machine, error);
-
-    slim_info("[ROUTINE]\tCALL %d\n", address);
-
-    error = ___slim_machine_call(machine, address);
+    u32_t address = instruction.arg2;
+    SlimError error = ___slim_machine_call(machine, address);
     slim_machine_except(machine, error);
 
     return;
@@ -623,7 +619,7 @@ void slim_machine_execute(SlimMachine* machine, SlimRoutine routine, SlimInstruc
     if (routine) {
         routine(machine, instruction);
     } else {
-        slim_error("[DECODE]\tInvalid instruction\n");
+        slim_error("[EXECUTE]\tInvalid instruction 0x%x\n", instruction.opcode);
         machine->flags.error = 1;
     }
 }
@@ -694,6 +690,11 @@ void slim_machine_launch(SlimMachine* machine) {
         SlimInstruction instruction = slim_machine_fetch(machine);
         SlimRoutine routine = slim_machine_decode(machine, instruction);
         slim_machine_execute(machine, routine, instruction);
+
+        if (machine->flags.error) {
+            slim_error("[LAUNCH]\tError encountered, halting machine\n");
+            break;
+        }
     }
     slim_info("[LAUNCH]\tMachine halted\n");
 }

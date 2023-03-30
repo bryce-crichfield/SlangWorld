@@ -103,8 +103,8 @@ enum SlimOpcode {
     SL_OPCODE_JNE       = 0x51,     // Jump to specified address if stack top not equal to zero JNE ADDR
     SL_OPCODE_JE        = 0x52,     // Jump to specified address if stack top equal to zero     JE ADDR
 
-    SL_OPCODE_CALL      = 0x63,     // Call a function at the address from the top of stack     CALL 
-    SL_OPCODE_RET       = 0x64,     // Return from a function                                   RET
+    SL_OPCODE_CALL      = 0x60,     // Call a function at the address from the top of stack     CALL 
+    SL_OPCODE_RET       = 0x61,     // Return from a function                                   RET
     // clang-format on
 };
 
@@ -172,6 +172,11 @@ struct SlimMachineFlags {
     u16_t halt : 1;
 };
 
+struct SlimCallStackFrame {
+    u32_t instruction_pointer;
+    u32_t size;
+};
+
 struct SlimMachine {
     SlimMachineFlags flags;
 
@@ -191,11 +196,6 @@ struct SlimMachine {
 
     u8_t* bytecode;
     u32_t bytecode_size;
-};
-
-struct SlimCallStackFrame {
-    u32_t instruction_pointer;
-    u32_t size;
 };
 
 // Fetch, Decode, Execute
