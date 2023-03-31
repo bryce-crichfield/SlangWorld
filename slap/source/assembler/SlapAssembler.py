@@ -2,8 +2,8 @@ from parsing.SlapParser import SlapParser
 from parsing.SlapListener import SlapListener
 
 from symbol.SlapSymbol import SlapSymbolTable
-from SlapUtil import SlapByteWriter
-from SlapLog import log_info, log_error
+from .SlapByteWriter import SlapByteWriter
+from log.SlapLog import info, error
 
 # ----------------------------------------------------------------------------------------------------------------------
 class SlapAssembler(SlapListener):
@@ -129,10 +129,7 @@ class SlapAssembler(SlapListener):
         elif ctx.INT_NUMBER() is not None:
             self.writer.write_int(ctx.INT_NUMBER().getText())
         else:
-            log_error("Unknown number type")
+            error("Unknown number type")
 
     def enterFloatingNumber(self, ctx: SlapParser.FloatingNumberContext):
         self.writer.write_float(ctx.FLOAT_NUMBER().getText())
-
-    def build(self) -> bytearray:
-        return self.byte_array

@@ -59,3 +59,4 @@ class SlapByteWriter:
         as_float = float(string[2:])
         value: int = struct.unpack("Q", struct.pack("d", as_float))[0]
         self.write_number(value)      
+        

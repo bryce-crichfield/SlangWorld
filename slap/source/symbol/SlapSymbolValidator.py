@@ -2,7 +2,7 @@ from parsing.SlapListener import SlapListener
 from parsing.SlapParser import SlapParser
 
 from .SlapSymbol import SlapSymbolTable
-from SlapLog import *
+from log.SlapLog import *
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ class SlapSymbolValidator(SlapListener):
         if hasMain:
             return True
 
-        log_error("No main section found")
+        error("No main section found")
 
         return False
 
@@ -49,7 +49,7 @@ class SlapSymbolValidator(SlapListener):
 
         for name, occurences in name_occurences.items():
             if occurences > 1:
-                log_error(f"Duplicate symbol name '{name}'")
+                error(f"Duplicate symbol name '{name}'")
                 return False
 
         return True
@@ -76,7 +76,7 @@ class SlapSymbolValidator(SlapListener):
         if isNative:
             return True
 
-        log_error("Unknown symbol '{name}'")
+        error("Unknown symbol '{name}'")
         return False
 
     def _validate_reference_type(self, ctx: SlapParser.SectionSpecifierContext) -> bool:
@@ -90,15 +90,15 @@ class SlapSymbolValidator(SlapListener):
             return True
 
         if isinstance(ctx.parentCtx, SlapParser.InstructionJmpContext):
-            log_error(f"Cannot jump to native symbol '{name}'")
+            error(f"Cannot jump to native symbol '{name}'")
             return False
 
         if isinstance(ctx.parentCtx, SlapParser.InstructionJeqContext):
-            log_error(f"Cannot jump to native symbol '{name}'")
+            error(f"Cannot jump to native symbol '{name}'")
             return False
 
         if isinstance(ctx.parentCtx, SlapParser.InstructionJneContext):
-            log_error(f"Cannot jump to native symbol '{name}'")
+            error(f"Cannot jump to native symbol '{name}'")
             return False
 
         return True

@@ -2,7 +2,7 @@ from parsing.SlapListener import SlapListener
 from parsing.SlapParser import SlapParser
 
 from .SlapSymbol import *
-from SlapLog import log_info
+from log.SlapLog import info
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ class SlapSymbolResolver(SlapListener):
             if native.name == name:
                 address = native.identifier
                 break
-        
+
         hex_str = f"0x{address:08X}"
-        log_info(f"Resolved symbol '{name}' to address {hex_str}")
+        info(f"Resolved symbol '{name}' to address {hex_str}")
         ctx.resolved_address = address
