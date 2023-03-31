@@ -1,179 +1,87 @@
 import struct
+import sys
+import os
+
 from antlr4 import *
+from typing import Optional
+from dataclasses import dataclass
+
 from parsing.SlapLexer import SlapLexer
 from parsing.SlapParser import SlapParser
 from parsing.SlapListener import SlapListener
-import sys
-from dataclasses import dataclass
 
-# ----------------------------------------------------------------------------------------------------------------------
-@dataclass
-class OpcodeDefintion:
-    name: str
-    byte: int
-    argument_count: int
+from SlapLog import *
+from assembler.SlapAssembler import SlapAssembler
 
-
-OPCODE_TABLE = {}
-
-def define_opcode(name, byte, argument_count):
-    OPCODE_TABLE[name] = OpcodeDefintion(name, byte, argument_count)
-
-def match_opcode(opcode: str) -> OpcodeDefintion:
-    return OPCODE_TABLE[opcode.upper()]
-
-define_opcode("NOOP", 0x00, 0)
-define_opcode("HALT", 0x01, 0)
-
-define_opcode("LOADI", 0x10, 1)
-define_opcode("LOADR", 0x11, 1)
-define_opcode("LOADM", 0x12, 1)
-define_opcode("DROP", 0x13, 0)
-define_opcode("STORER", 0x14, 1)
-define_opcode("STOREM", 0x15, 0)
-
-define_opcode("DUP", 0x20, 0)
-define_opcode("SWAP", 0x21, 0)
-define_opcode("ROT", 0x22, 0)
-
-define_opcode("ADD", 0x30, 0)
-define_opcode("SUB", 0x31, 0)
-define_opcode("MUL", 0x32, 0)
-define_opcode("DIV", 0x33, 0)
-define_opcode("MOD", 0x34, 0)
-
-define_opcode("ADDF", 0x35, 0)
-define_opcode("SUBF", 0x36, 0)
-define_opcode("MULF", 0x37, 0)
-define_opcode("DIVF", 0x38, 0)
-define_opcode("MODF", 0x39, 0)
-
-define_opcode("ALLOC", 0x40, 1)
-define_opcode("FREE", 0x41, 0)
-
-define_opcode("JMP", 0x50, 1)
-define_opcode("JNE", 0x51, 1)
-define_opcode("JEQ", 0x52, 1)
-
-define_opcode("CALL", 0x60, 1)
-define_opcode("RET", 0x61, 0)
-
-define_opcode("ITOF", 0x70, 0)
-define_opcode("FTOI", 0x71, 0)
-# ----------------------------------------------------------------------------------------------------------------------
-@dataclass
-class SectionRecord:
-    global_index: int  # Which section is it?
-    instruction_count: int  # How large is the section?
-    global_byte_position: int  # Where does the section start?
+from symbol.SlapSymbol import *
+from symbol.SlapSymbolResolver import *
+from symbol.SlapSymbolTabulator import *
+from symbol.SlapSymbolValidator import *
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-class SlapSymbolTabulator(SlapListener):
-    """Tabulates section symbols, native symbols, etcs and produces a virtual symbol table [String -> Section]"""
+def parse_file(file_name) -> Optional[SlapParser.ProgramContext]:
+    # Check for existence of file
+    abspath = os.path.abspath(file_name)
+    if not os.path.exists(abspath):
+        log_error(f"File '{abspath}' does not exist")
+        return None
 
-    def __init__(self):
-        self.symbol_table = {}
-        self.current_sections_instruction_count = 0
-        self.global_index = 0
-        self.global_byte_position = 0
+    log_info(f"Parsing file {abspath}")
 
-    def exitSection(self, ctx: SlapParser.SectionContext):
-        section = SectionRecord(
-            self.global_index,
-            self.current_sections_instruction_count,
-            self.global_byte_position,
-        )
-        name = ctx.LABEL().getText()
-        self.symbol_table[name] = section
-        self.global_index += 1
-        self.current_sections_instruction_count = 0
-        self.global_byte_position += 9 * section.instruction_count
+    input = FileStream(file_name)
+    lexer = SlapLexer(input)
+    stream = CommonTokenStream(lexer)
+    parser = SlapParser(stream)
+    tree = parser.program()
 
-    def exitInstruction(self, ctx: SlapParser.InstructionContext):
-        self.current_sections_instruction_count += 1
+    # Check for errrors and possibly exit
+    if parser.getNumberOfSyntaxErrors() > 0:
+        log_error("Syntax errors detected")
+        return None
 
-# ----------------------------------------------------------------------------------------------------------------------
-class SlapSymbolResolver(SlapListener):
-    """Resolves named arguments in the instructions to their corresponding byte index from the virtual symbol table"""
-
-    def __init__(self, symbol_table):
-        self.symbol_table = symbol_table
-
-    def enterArgument(self, ctx: SlapParser.ArgumentContext):
-        if ctx.LABEL():
-            name = ctx.LABEL().getText()
-            section = self.symbol_table[name]
-            ctx.byte_index = section.global_byte_position
+    return tree
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-class SlapAssembler(SlapListener):
-    """Assembles the program into a byte array by generating the byte code for each instruction"""
+def assemble(tree: SlapParser.ProgramContext) -> Optional[bytearray]:
+    log_info("Assembling file")
 
-    def __init__(self, symbol_table):
-        self.symbol_table = symbol_table
-        self.byte_array = bytearray()
+    walker = ParseTreeWalker()
 
-    def parse_number(self, string: str):
-        if string.startswith("0x"):
-            return int(string[2:], 16)
-        elif string.startswith("0b"):
-            return int(string[2:], 2)
-        elif string.startswith("0f"):
-            return float(string[2:])
-        elif string.startswith("0i"):
-            return int(string[2:])
-        else:
-            raise Exception("Invalid number format")
-    
-    def write_integer(self, integer):
-        bytes = [0] * 8
-        for i in range(8):
-            bytes[i] = integer & 0xFF
-            integer >>= 8
+    tabulator = SlapSymbolTabulator()
+    walker.walk(tabulator, tree)
+    symbol_table = tabulator.symbol_table
 
-        # Reverse the bytes
-        bytes.reverse()
-        
-        for byte in bytes:
-            self.byte_array.append(byte)
+    validator = SlapSymbolValidator(symbol_table)
+    if not validator.isValid:
+        log_error("Symbol validation failed (pre-pass)")
+        return None
 
-    def write_float(self, float):
-        # Write the provided float as a 64-bit IEEE 754 double-precision floating point number
-        # https://en.wikipedia.org/wiki/Double-precision_floating-point_format
+    walker.walk(validator, tree)
+    if not validator.isValid:
+        log_error("Symbol validation failed (post-pass)")
+        return None
 
-        # Convert the float to a 64-bit integer
-        integer = struct.unpack("Q", struct.pack("d", float))
-        self.write_integer(integer[0])
-        
-    def write_number(self, number):
-        # If number is a float then write it as a float
-        if isinstance(number, float):
-            self.write_float(number)
-        else:
-            self.write_integer(number)
-    
-    def enterInstruction(self, ctx: SlapParser.InstructionContext):
-        opcode = ctx.OPCODE().getText()
-        opcode_def = match_opcode(opcode)
-        if opcode_def.argument_count != 0 and ctx.argument() is None:
-            raise Exception("Invalid argument count")
+    resolver = SlapSymbolResolver(symbol_table)
+    walker.walk(resolver, tree)
 
-        self.byte_array.append(opcode_def.byte)
-        if ctx.argument() is None:
-            for i in range(8):
-                self.byte_array.append(0)
+    assembler = SlapAssembler(symbol_table)
+    walker.walk(assembler, tree)
+    return assembler.build()
 
-    def enterArgument(self, ctx: SlapParser.ArgumentContext):
-        if ctx.LABEL():
-            self.write_number(ctx.byte_index)
-        elif ctx.NUMBER():
-            text = ctx.NUMBER().getText()
-            number = self.parse_number(text)
-            self.write_number(number)
-        else:
-            raise Exception("Invalid argument")
+
+# ----------------------------------------------------------------------------------------------------------------------
+def hexdump_bytecode(byte_array: bytearray):
+    for i in range(0, len(byte_array), 9):
+        bytes = byte_array[i : i + 9]
+        print(f"{i:04x} {bytes.hex()}")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+def write_bytecode(byte_array: bytearray, file_name: str):
+    with open(file_name, "wb") as f:
+        f.write(byte_array)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -182,31 +90,19 @@ def main():
         print("Usage: slap <input file> <output file>")
         return
 
-    input = FileStream(sys.argv[1])
-    lexer = SlapLexer(input)
-    stream = CommonTokenStream(lexer)
-    parser = SlapParser(stream)
-    tree = parser.program()
-    walker = ParseTreeWalker()
+    tree = parse_file(sys.argv[1])
+    if tree is None:
+        return
 
-    # Perform the necessary passes to assemble the program
-    symbolTabulator = SlapSymbolTabulator()
-    walker.walk(symbolTabulator, tree)
+    bytecode = assemble(tree)
+    if bytecode is None:
+        return
 
-    symbolResolver = SlapSymbolResolver(symbolTabulator.symbol_table)
-    walker.walk(symbolResolver, tree)
+    write_bytecode(bytecode, sys.argv[2])
 
-    assembler = SlapAssembler(symbolTabulator.symbol_table)
-    walker.walk(assembler, tree)
+    hexdump_bytecode(bytecode)
 
-    # Hex dump the assembled program
-    for i in range(0, len(assembler.byte_array), 9):
-        bytes = assembler.byte_array[i : i + 9]
-        print(f"{i:04x} {bytes.hex()}")
 
-    # Write the assembled program to a file
-    with open(sys.argv[2], "wb") as f:
-        f.write(assembler.byte_array)
 # ----------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()

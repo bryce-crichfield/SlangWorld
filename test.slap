@@ -1,19 +1,14 @@
-main {
-//  call testFloatArith;
-    call testIntegerArith;
+native @(stdputch) 0x00;
+native @(stdgetch) 0x01;
+
+@(main) {
+    call @(testIntegerArith);
+    itoc;
+    call @(stdputch);
     halt;
 }
 
-// testFloatArith {
-//     loadi 0f3.0;
-//     loadi 0f1.0;
-//     divf;
-//     loadi 0f2.0;
-//     addf;
-//     ret;
-// }
-
-testIntegerArith {
+@(testIntegerArith) {
     loadi 0f2.0;
     loadi 0f0.5;
     mulf;
@@ -22,3 +17,17 @@ testIntegerArith {
     add;
     ret;
 }
+
+/*
+    %provided std.putch, std.getch
+
+    main() {
+        int a = testIntegerArith();
+        putch((char) a);
+        exit;
+    }
+
+    testIntegerArith(): int {
+        return (int) (2.0f * 0.5f) + 2;
+    }
+*/

@@ -9,3 +9,5 @@
 /slap/antlr4.12.0-complete.jar
 /slim/test.log
 .metals
+
+**/__pycache__
