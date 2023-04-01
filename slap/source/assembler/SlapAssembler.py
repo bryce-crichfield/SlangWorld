@@ -96,7 +96,7 @@ class SlapAssembler(SlapListener):
 
     def enterInstructionCall(self, ctx: SlapParser.InstructionContext):
         # Determine if we are native or section call
-        opcode = 0x50
+        opcode = 0x60
         specifier = ctx.sectionSpecifier()
         name = specifier.LABEL().getText()
 
@@ -110,10 +110,10 @@ class SlapAssembler(SlapListener):
         self.writer.write_number(specifier.resolved_address)
 
     def enterInstructionRet(self, ctx: SlapParser.InstructionContext):
-        self.writer.write_argless_opcode(0x53)
+        self.writer.write_argless_opcode(0x62)
 
     def enterInstructionFtoi(self, ctx: SlapParser.InstructionContext):
-        self.writer.write_argless_opcode(0x70)
+        self.writer.write_argless_opcode(0x71)
 
     def enterInstructionItof(self, ctx: SlapParser.InstructionContext):
         self.writer.write_argless_opcode(0x71)

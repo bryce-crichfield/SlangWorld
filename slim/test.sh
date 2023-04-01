@@ -2,6 +2,9 @@
 
 ./auto.sh -b
 echo "Assembling test.slap"
-cd ../slap && python3 source/Slap.py ../test.slap ../test.slim && cd ../slim
+cd ../slap && python3 source/Slap.py ../test.slap && cd ../slim
 echo "Running test.slim"
-./bin/exe ../test.slim
+if [ -f test.log ]; then
+    rm test.log
+fi
+./bin/exe test.log ../test.slim

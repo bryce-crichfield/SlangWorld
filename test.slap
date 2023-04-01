@@ -1,33 +1,6 @@
-native @(stdputch) 0x00;
-native @(stdgetch) 0x01;
-
 @(main) {
-    call @(testIntegerArith);
-    itoc;
-    call @(stdputch);
+    loadi 0x1;
+    loadi 0x2;
+    add;
     halt;
 }
-
-@(testIntegerArith) {
-    loadi 0f2.0;
-    loadi 0f0.5;
-    mulf;
-    ftoi;
-    loadi 0i2;
-    add;
-    ret;
-}
-
-/*
-    %provided std.putch, std.getch
-
-    main() {
-        int a = testIntegerArith();
-        putch((char) a);
-        exit;
-    }
-
-    testIntegerArith(): int {
-        return (int) (2.0f * 0.5f) + 2;
-    }
-*/
