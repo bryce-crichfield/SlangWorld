@@ -1,9 +1,9 @@
-#include "SlimRuntime.h"
 #include "../SlimType.h"
 #include "../log/SlimLog.h"
+#include "SlimMachine.h"
 
 #include <math.h>
-
+// ---------------------------------------------------------------------------------------------------------------------
 #define slim_machine_except(machine, error)                                                                            \
     {                                                                                                                  \
         if (error != SL_ERROR_NONE) {                                                                                  \
@@ -11,7 +11,7 @@
             return;                                                                                                    \
         }                                                                                                              \
     }
-
+// ---------------------------------------------------------------------------------------------------------------------
 // Used to template integer arithmetic operations
 #define ___slim_routine_binary_integer(operation)                                                                      \
     u64_t a;                                                                                                           \
@@ -25,6 +25,7 @@
     error = ___slim_machine_push_operand(machine, result);                                                             \
     slim_machine_except(machine, error);
 
+// ---------------------------------------------------------------------------------------------------------------------
 // Used to template floating point arithmetic operations
 #define ___slim_routine_binary_float(operation)                                                                        \
     u64_t a;                                                                                                           \
@@ -40,27 +41,35 @@
     u64_t result = *((u64_t*)&result_double);                                                                          \
     error = ___slim_machine_push_operand(machine, result);                                                             \
     slim_machine_except(machine, error);
-
-// TODO: Define macro for templating casting operations and then implement them
-
-// Routines and Operations ---------------------------------------------------------------------------------------------
-
+// ---------------------------------------------------------------------------------------------------------------------
+// TODO: Validate and utilize me
+#define ___slim_routine_cast(to_type, from_type)                                                                       \
+    u64_t a;                                                                                                           \
+    SlimError error;                                                                                                   \
+    error = ___slim_machine_pop_operand(machine, &a);                                                                  \
+    slim_machine_except(machine, error);                                                                               \
+    to_type a_cast = (to_type)a;                                                                                       \
+    from_type a_cast_cast = (from_type)a_cast;                                                                         \
+    u64_t result = (u64_t)a_cast_cast;                                                                                 \
+    error = ___slim_machine_push_operand(machine, result);                                                             \
+    slim_machine_except(machine, error);
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_nop(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tNOP\n");
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_halt(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tHALT\n");
     machine->flags.halt = 1;
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_loadi(SlimMachineState* machine, SlimInstruction instruction) {
     SlimError error;
 
     u64_t value = (u64_t)instruction.arg1 << 32 | instruction.arg2;
-    slim_info("[ROUTINE]\tLOADI %lld\n", value);
+    slim_info("[ROUTINE]\tLOADI 0x%x\n", value);
 
     error = ___slim_machine_push_operand(machine, value);
 
@@ -70,7 +79,7 @@ void slim_routine_loadi(SlimMachineState* machine, SlimInstruction instruction) 
 
     slim_machine_except(machine, error);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_loadr(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tLOADR %d\n", instruction.arg1);
 
@@ -81,7 +90,7 @@ void slim_routine_loadr(SlimMachineState* machine, SlimInstruction instruction) 
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_loadm(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tLOADM %d, %d\n", instruction.arg1, instruction.arg2);
 
@@ -98,7 +107,7 @@ void slim_routine_loadm(SlimMachineState* machine, SlimInstruction instruction) 
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_drop(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tDROP\n");
 
@@ -107,7 +116,7 @@ void slim_routine_drop(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_storer(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tSTORER %d\n", instruction.arg1);
 
@@ -119,7 +128,7 @@ void slim_routine_storer(SlimMachineState* machine, SlimInstruction instruction)
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_storem(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tSTOREM %d\n", instruction.arg1);
 
@@ -137,7 +146,7 @@ void slim_routine_storem(SlimMachineState* machine, SlimInstruction instruction)
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_dup(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tDUP\n");
 
@@ -155,7 +164,7 @@ void slim_routine_dup(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_swap(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tSWAP\n");
 
@@ -177,7 +186,7 @@ void slim_routine_swap(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_rot(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tROT\n");
 
@@ -206,52 +215,52 @@ void slim_routine_rot(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_add(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tADD\n");
     ___slim_routine_binary_integer(+);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_sub(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tSUB\n");
     ___slim_routine_binary_integer(-);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_mul(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tMUL\n");
     ___slim_routine_binary_integer(*);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_div(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tDIV\n");
     ___slim_routine_binary_integer(/);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_mod(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tMOD\n");
     ___slim_routine_binary_integer(%);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_addf(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tADDF\n");
     ___slim_routine_binary_float(+);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_subf(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tSUBF\n");
     ___slim_routine_binary_float(-);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_mulf(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tMULF\n");
     ___slim_routine_binary_float(*);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_divf(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tDIVF\n");
     ___slim_routine_binary_float(/);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_modf(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tMODF\n");
 
@@ -273,7 +282,7 @@ void slim_routine_modf(SlimMachineState* machine, SlimInstruction instruction) {
     error = ___slim_machine_push_operand(machine, result);
     slim_machine_except(machine, error);
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_alloc(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tALLOC %d\n", instruction.arg1);
 
@@ -290,7 +299,7 @@ void slim_routine_alloc(SlimMachineState* machine, SlimInstruction instruction) 
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_free(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tFREE %d\n", instruction.arg1);
 
@@ -299,14 +308,14 @@ void slim_routine_free(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_jmp(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tJUMP %d\n", instruction.arg2);
 
     u32_t address = instruction.arg2;
     machine->instruction_pointer = address;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_jne(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tJNE %d\n", instruction.arg1);
 
@@ -318,7 +327,7 @@ void slim_routine_jne(SlimMachineState* machine, SlimInstruction instruction) {
         machine->instruction_pointer = instruction.arg1;
     }
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_je(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tJE %d\n", instruction.arg1);
 
@@ -330,7 +339,7 @@ void slim_routine_je(SlimMachineState* machine, SlimInstruction instruction) {
         machine->instruction_pointer = instruction.arg1;
     }
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_call(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tCALL %x\n", instruction.arg2);
 
@@ -340,7 +349,7 @@ void slim_routine_call(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_ret(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tRET\n");
 
@@ -349,7 +358,7 @@ void slim_routine_ret(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_calln(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tCALLN %x\n", instruction.arg2);
 
@@ -357,7 +366,7 @@ void slim_routine_calln(SlimMachineState* machine, SlimInstruction instruction) 
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_ftoi(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tFTOI\n");
 
@@ -375,7 +384,7 @@ void slim_routine_ftoi(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
-
+// ---------------------------------------------------------------------------------------------------------------------
 void slim_routine_itof(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tITOF\n");
 
@@ -393,3 +402,4 @@ void slim_routine_itof(SlimMachineState* machine, SlimInstruction instruction) {
 
     return;
 }
+// ---------------------------------------------------------------------------------------------------------------------

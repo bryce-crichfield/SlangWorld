@@ -13,7 +13,6 @@ typedef signed long long s64_t;
 
 typedef float f32_t;
 typedef double f64_t;
-
 // Error Handling ------------------------------------------------------------------------------------------------------
 typedef enum SlimError SlimError;
 enum SlimError {
@@ -32,3 +31,4 @@ enum SlimError {
         printf("Assertion failed: %s\n", #condition);                                                                  \
         return error                                                                                                   \
     }
+// ---------------------------------------------------------------------------------------------------------------------
