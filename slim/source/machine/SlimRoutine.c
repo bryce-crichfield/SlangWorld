@@ -362,8 +362,14 @@ void slim_routine_ret(SlimMachineState* machine, SlimInstruction instruction) {
 void slim_routine_calln(SlimMachineState* machine, SlimInstruction instruction) {
     slim_info("[ROUTINE]\tCALLN %x\n", instruction.arg2);
 
-    printf("CALLN not implemented yet\n");
+    // We need to signal an interrupt to the platform and push the identifier of the function to call
+    // The platform will then call the function and push the result back to the machine
 
+    SlimError error = ___slim_machine_push_operand(machine, instruction.arg2);
+    slim_machine_except(machine, error);
+
+    machine->flags.interrupt = 1;
+    
     return;
 }
 // ---------------------------------------------------------------------------------------------------------------------

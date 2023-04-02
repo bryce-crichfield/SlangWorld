@@ -95,22 +95,32 @@ class SlapAssembler(SlapListener):
         self.writer.write_byte(0x52)
 
     def enterInstructionCall(self, ctx: SlapParser.InstructionContext):
-        # Determine if we are native or section call
-        opcode = 0x60
+        # Make sure the section specifer is not native
         specifier = ctx.sectionSpecifier()
-        name = specifier.LABEL().getText()
 
-        isNative = any(
-            native.name == name for native in self.symbol_table.native_symbols
-        )
-        if isNative:
-            opcode = 0x52
+        if any(
+            native.name == specifier.LABEL().getText()
+            for native in self.symbol_table.native_symbols
+        ):
+            error("Cannot call native section as non-native")
 
-        self.writer.write_byte(opcode)
+        self.writer.write_byte(0x50)
         self.writer.write_number(specifier.resolved_address)
 
     def enterInstructionRet(self, ctx: SlapParser.InstructionContext):
         self.writer.write_argless_opcode(0x62)
+
+    def enterInstructionCalln(self, ctx: SlapParser.InstructionCallnContext):
+        # Make sure the section specifer is native
+        specifier = ctx.sectionSpecifier()
+        if not any(
+            native.name == specifier.LABEL().getText()
+            for native in self.symbol_table.native_symbols
+        ):
+            error("Cannot call non-native section as native")
+        
+        self.writer.write_byte(0x62)
+        self.writer.write_number(specifier.resolved_address)
 
     def enterInstructionFtoi(self, ctx: SlapParser.InstructionContext):
         self.writer.write_argless_opcode(0x71)

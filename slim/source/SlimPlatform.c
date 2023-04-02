@@ -7,14 +7,20 @@
 
 SlimMachineState* slim_platform_machine; // Global Machine State
 
-// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------]
 void slim_platform_init(int argc, char** argv) {
     if (argc != 3) {
-        slim_error("Usage: slim <log file> <bytecode file>\n");
+        slim_log_error("Usage: slim <log file> <bytecode file>\n");
         exit(1);
     }
 
     slim_log_init(argv[1], 1);
+
+    SlimError error = slim_native_init();
+    if (error != SL_ERROR_NONE) {
+        slim_log_error("Failed to initialize native code\n");
+        exit(1);
+    }
 
     // Initialize the machine
     slim_platform_machine = slim_machine_create();
@@ -24,7 +30,7 @@ void slim_platform_init(int argc, char** argv) {
     u32_t code_size = 0;
     u8_t* code = slim_bytecode_load(argv[2], &code_size);
     if (code == NULL || code_size == 0) {
-        slim_error("Failed to load bytecode file: %s\n", argv[2]);
+        slim_log_error("Failed to load bytecode file: %s\n", argv[2]);
         exit(1);
     }
 
@@ -44,8 +50,7 @@ void slim_platform_update() {
 
     // First handle any flags set during the last update and react accordingly
     if (flags.error) {
-        // TODO: Read the error code and print a message
-        slim_error("[UPDATE]\tRuntime error encountered, terminating platform\n");
+        slim_log_error("[UPDATE]\tRuntime error encountered, terminating platform\n");
         slim_platform_exit();
     }
 
@@ -55,9 +60,33 @@ void slim_platform_update() {
     }
 
     if (flags.interrupt) {
-        // TODO: Handle native code and interrupts
+        u64_t native_function_identifier;
+        SlimError error;
+
+        error = slim_machine_pop(slim_platform_machine, &native_function_identifier);
+        if (error != SL_ERROR_NONE) {
+            slim_log_error("[INTERRUPT]\tFailed to pop native function identifier from stack\n");
+            slim_platform_exit();
+        }
+
+        SlimNativeFunction native_function;
+        error = slim_native_get_function(native_function_identifier, &native_function);
+        if (error != SL_ERROR_NONE) {
+            slim_log_error(
+                "[INTERRUPT]\tFailed to get native function for identifier: %llu\n", native_function_identifier);
+            slim_platform_exit();
+        }
+
+        error = native_function(slim_platform_machine);
+        if (error != SL_ERROR_NONE) {
+            slim_log_error("[INTERRUPT]\tNative function returned error: %d\n", error);
+            slim_platform_exit();
+        }
+
+        flags.interrupt = 0;
     }
 
+    // Otherwise, continue running the machine by stepping it
     slim_machine_step(slim_platform_machine);
 }
 // ---------------------------------------------------------------------------------------------------------------------

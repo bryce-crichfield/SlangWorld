@@ -27,7 +27,7 @@ void slim_log_hexdump(void* data, u32_t size, u32_t stride, u8_t is_sparse);
         slim_log_printf(__VA_ARGS__);                                                                                  \
     }
 
-#define slim_error(...)                                                                                                \
+#define slim_log_error(...)                                                                                            \
     {                                                                                                                  \
         slim_log_printf("[ERROR]\t");                                                                                  \
         slim_log_printf(__VA_ARGS__);                                                                                  \

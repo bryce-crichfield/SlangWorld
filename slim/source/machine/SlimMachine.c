@@ -84,7 +84,7 @@ u8_t* slim_bytecode_load(const char* filename, u32_t* bytecode_size) {
 
     FILE* file = fopen(filename, "rb");
     if (file == NULL) {
-        slim_error("Failed to open file\n");
+        slim_log_error("Failed to open file\n");
         return NULL;
     }
 
@@ -92,14 +92,14 @@ u8_t* slim_bytecode_load(const char* filename, u32_t* bytecode_size) {
     fseek(file, 0, SEEK_END);
     u32_t size = ftell(file);
     if (size % 9 != 0) {
-        slim_error("Invalid bytecode file\n");
+        slim_log_error("Invalid bytecode file\n");
         return NULL;
     }
 
     // Allocate memory for the bytecode
     u8_t* data = malloc(size);
     if (data == NULL) {
-        slim_error("Failed to allocate memory for bytecode\n");
+        slim_log_error("Failed to allocate memory for bytecode\n");
         return NULL;
     }
 
@@ -113,6 +113,16 @@ u8_t* slim_bytecode_load(const char* filename, u32_t* bytecode_size) {
 
     return data;
 }
+// ---------------------------------------------------------------------------------------------------------------------
+SlimError slim_machine_push(SlimMachineState* machine, u64_t value) {
+    return ___slim_machine_push_operand(machine, value);
+}
+// ---------------------------------------------------------------------------------------------------------------------
+SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value) {
+    return ___slim_machine_pop_operand(machine, value);
+}
+// ---------------------------------------------------------------------------------------------------------------------
+SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value);
 // Internal Routines ---------------------------------------------------------------------------------------------------
 SlimInstruction slim_machine_fetch(SlimMachineState* machine) {
     SlimInstruction instruction;
@@ -124,7 +134,7 @@ SlimInstruction slim_machine_fetch(SlimMachineState* machine) {
         arg1 |= machine->bytecode[machine->instruction_pointer + 1 + i] << (i * 8);
     }
 
-    // WARN: This is a hack to get around endianness issues
+    // TODO: This is a hack to get around endianness issues, replace with detection and conversion
     // Reverse the bits
     arg1 = ((arg1 & 0x000000FF) << 24) | ((arg1 & 0x0000FF00) << 8) | ((arg1 & 0x00FF0000) >> 8) |
            ((arg1 & 0xFF000000) >> 24);
@@ -135,7 +145,7 @@ SlimInstruction slim_machine_fetch(SlimMachineState* machine) {
         arg2 |= machine->bytecode[machine->instruction_pointer + 5 + i] << (i * 8);
     }
 
-    // WARN: This is a hack to get around endianness issues
+    // TODO: This is a hack to get around endianness issues, replace with detection and conversion
     // Reverse the bits
     arg2 = ((arg2 & 0x000000FF) << 24) | ((arg2 & 0x0000FF00) << 8) | ((arg2 & 0x00FF0000) >> 8) |
            ((arg2 & 0xFF000000) >> 24);
@@ -191,7 +201,7 @@ void slim_machine_execute(SlimMachineState* machine, SlimRoutine routine, SlimIn
     if (routine) {
         routine(machine, instruction);
     } else {
-        slim_error("[EXECUTE]\tInvalid instruction 0x%x\n", instruction.opcode);
+        slim_log_error("[EXECUTE]\tInvalid instruction 0x%x\n", instruction.opcode);
         machine->flags.error = 1;
     }
 }

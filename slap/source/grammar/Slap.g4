@@ -37,6 +37,7 @@ instruction_body
     | instructionJeq
     | instructionCall
     | instructionRet
+    | instructionCalln
     | instructionFtoi
     | instructionItof
     | instructionItoc
@@ -70,6 +71,7 @@ instructionJne: 'jne' sectionSpecifier;
 instructionJeq: 'jeq' sectionSpecifier;
 instructionCall: 'call' sectionSpecifier;
 instructionRet: 'ret';
+instructionCalln: 'calln' sectionSpecifier;
 instructionFtoi: 'ftoi';
 instructionItof: 'itof';
 instructionItoc: 'itoc';

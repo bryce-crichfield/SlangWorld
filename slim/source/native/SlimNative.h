@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../SlimType.h"
+#include "../machine/SlimMachine.h"
+
 /** Basically we need an abstraction over top of the SLIM platform
  *  to allow us to write the glue-logic without having to tamper
  *  with the platform code.  When the platform code makes a call
@@ -10,10 +13,12 @@
  *  the SlimVM through the SlimNative interface.
  */
 
-void slim_native_init() {
+typedef SlimError(*SlimNativeFunction)(SlimMachineState* machine);
 
-}
+SlimError slim_native_init();
+void slim_native_close();
 
-void slim_native_close() {
+SlimError slim_native_get_function(u64_t identifier, SlimNativeFunction* function);
+SlimError slim_native_put_function(u64_t identifier, SlimNativeFunction function);
 
-}
+void slim_native_user_defintion();

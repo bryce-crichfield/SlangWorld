@@ -1,6 +1,7 @@
+native @(printf) 0x0;
+
 @(main) {
     loadi 0x1;
-    loadi 0x2;
-    add;
+    calln @(printf);
     halt;
 }
