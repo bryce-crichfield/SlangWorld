@@ -9,6 +9,7 @@
     to inspect the state of the VM.
 
 
+- [SLAP] Add cast operation to grammar and assembler, and remove itof and ftoi
 - [SLAP] Add header/metadata section writer 
 - [SLAP] Add native symbol section writer
 

@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 
-SlimMachineState* slim_platform_machine; // Global Machine State
+SlimMachineState* slim_platform_machine_instance; // Global Machine State
 
 // ---------------------------------------------------------------------------------------------------------------------]
 void slim_platform_init(int argc, char** argv) {
@@ -16,15 +16,15 @@ void slim_platform_init(int argc, char** argv) {
 
     slim_log_init(argv[1], 1);
 
-    SlimError error = slim_native_init(slim_platform_machine);
+    SlimError error = slim_native_init(slim_platform_machine_instance);
     if (error != SL_ERROR_NONE) {
         slim_log_error("Failed to initialize native code\n");
         exit(1);
     }
 
     // Initialize the machine
-    slim_platform_machine = slim_machine_create();
-    slim_machine_reset(slim_platform_machine);
+    slim_platform_machine_instance = slim_machine_create();
+    slim_machine_reset(slim_platform_machine_instance);
 
     // Load the bytecode file
     u32_t code_size = 0;
@@ -35,7 +35,7 @@ void slim_platform_init(int argc, char** argv) {
     }
 
     // Load the bytecode into the machine
-    slim_machine_load(slim_platform_machine, code, code_size);
+    slim_machine_load(slim_platform_machine_instance, code, code_size);
     // TODO: Bytecode unfreed, because machine takes ownership of underlying data?
     // TODO: Init native code
 }
@@ -45,25 +45,26 @@ void slim_platform_update() {
     // be made more intelligent to only flush when the buffer is full or when a certain amount of time has passed.
     slim_log_flush();
 
-    SlimMachineFlags flags;
-    slim_machine_get_flags(slim_platform_machine, &flags);
-
     // First handle any flags set during the last update and react accordingly
-    if (flags.error) {
+    // For now, the platform is not resposible for clearing/resetting the flags
+    u8_t error_flag = slim_machine_flag_error_get(slim_platform_machine_instance);
+    if (error_flag) {
         slim_log_error("[UPDATE]\tRuntime error encountered, terminating platform\n");
         slim_platform_exit();
     }
 
-    if (flags.halt) {
-        slim_info("[UPDATE]\tMachine halted, terminating platform\n");
+    u8_t halt_flag = slim_machine_flag_halt_get(slim_platform_machine_instance);
+    if (halt_flag) {
+        slim_log_info("[UPDATE]\tMachine halted, terminating platform\n");
         slim_platform_exit();
     }
 
-    if (flags.interrupt) {
+    u8_t interrupt_flag = slim_machine_flag_interrupt_get(slim_platform_machine_instance);
+    if (interrupt_flag) {
         u64_t native_function_identifier;
         SlimError error;
 
-        error = slim_machine_pop(slim_platform_machine, &native_function_identifier);
+        error = slim_machine_pop(slim_platform_machine_instance, &native_function_identifier);
         if (error != SL_ERROR_NONE) {
             slim_log_error("[INTERRUPT]\tFailed to pop native function identifier from stack\n");
             slim_platform_exit();
@@ -83,16 +84,14 @@ void slim_platform_update() {
             slim_log_error("[INTERRUPT]\tNative function returned error: %d\n", error);
             slim_platform_exit();
         }
-
-        flags.interrupt = 0;
     }
 
     // Otherwise, continue running the machine by stepping it
-    slim_machine_step(slim_platform_machine);
+    slim_machine_step(slim_platform_machine_instance);
 }
 // ---------------------------------------------------------------------------------------------------------------------
 void slim_platform_exit() {
-    slim_machine_destroy(slim_platform_machine);
+    slim_machine_destroy(slim_platform_machine_instance);
     slim_log_close();
     exit(0);
 }

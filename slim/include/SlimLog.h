@@ -15,13 +15,13 @@ void slim_log_hexdump(void* data, u32_t size, u32_t stride, u8_t is_sparse);
 // Macro Subroutines
 // TODO: Add more sophisticated logging routines for nicer formatting and output
 // TODO: Log macros should print newline automatically as the macro represent represent entries in the log
-#define slim_info(...)                                                                                                 \
+#define slim_log_info(...)                                                                                                 \
     {                                                                                                                  \
         slim_log_printf("[INFO]\t");                                                                                   \
         slim_log_printf(__VA_ARGS__);                                                                                  \
     }
 
-#define slim_warn(...)                                                                                                 \
+#define slim_log_warn(...)                                                                                                 \
     {                                                                                                                  \
         slim_log_printf("[WARN]\t");                                                                                   \
         slim_log_printf(__VA_ARGS__);                                                                                  \
