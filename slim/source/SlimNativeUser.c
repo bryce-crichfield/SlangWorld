@@ -19,9 +19,6 @@
 
 // /** @brief The user has to define this method somewhere in the compilation chain for SLIM to work...
 //  * Really, I hate this solution, and in the future the bindings should be defined dynamically in a DLL or SO.
-//  * But for now, this is the best solution I can come up with. 
+//  * But for now, this is the best solution I can come up with.
 // */
-void slim_native_user_defintion() {
-    printf("Hello World!\n");
-
-}
+void slim_native_user_defintion() { printf("Hello World!\n"); }

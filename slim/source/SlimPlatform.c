@@ -1,7 +1,7 @@
-#include <SlimPlatform.h>
 #include <SlimLog.h>
 #include <SlimMachine.h>
 #include <SlimNative.h>
+#include <SlimPlatform.h>
 
 #include <stdlib.h>
 

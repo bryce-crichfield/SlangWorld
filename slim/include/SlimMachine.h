@@ -5,17 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-/** The public API for the machine module.  The machine module encapsulates the inner workings of a single virtual
+/** --------------------------------------------------------------------------------------------------------------------
+ *  The public API for the machine module.  The machine module encapsulates the inner workings of a single virtual
  *  machine process.  It is responsible for execution of bytecode and the management of its own memory.
  *  The machine module presents a highly simplified interface to the rest of the system.
  *  The public API must provide for three key operations:
  *  1. Lifetime management - providing for the creation and destruction of a machine
  *  2. Execution management - providing for the execution of a machine and the loading of bytecode
  *  3. Memory management - providing simplified access to the operand stack (primarily for native functions)
- */
+ * ------------------------------------------------------------------------------------------------------------------ */
 
 typedef struct SlimMachineState SlimMachineState;
 typedef struct SlimMachineFlags SlimMachineFlags;
@@ -40,7 +38,11 @@ void slim_machine_get_flags(SlimMachineState* machine, SlimMachineFlags* flags);
 SlimError slim_machine_push(SlimMachineState* machine, u64_t value);
 SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value);
 
-// ---------------------------------------------------------------------------------------------------------------------
+/** --------------------------------------------------------------------------------------------------------------------
+ * The internal API for the SLIM machine.  This API is not intended to be used by the rest of the system.  It is
+ * intended to be used by the machine module itself.  The internal API is responsible for the execution of bytecode
+ * and the management of the machine's memory. 
+ * ------------------------------------------------------------------------------------------------------------------ */
 
 #define SLIM_MACHINE_OPERAND_STACK_SIZE 8
 #define SLIM_MACHINE_CALL_STACK_SIZE 8
@@ -53,8 +55,8 @@ typedef struct SlimBytecode SlimBytecode;
 typedef enum SlimOpcode SlimOpcode;
 typedef struct SlimBlock SlimBlock;
 typedef void (*SlimRoutine)(SlimMachineState* machine, SlimInstruction instruction);
-// State and Data - Machine, Errors, and Memory ------------------------------------------------------------------------
 
+// State and Data - Machine, Errors, and Memory ------------------------------------------------------------------------
 struct SlimCallStackFrame {
     u32_t instruction_pointer;
     u32_t size;
@@ -81,7 +83,7 @@ struct SlimMachineState {
     u32_t bytecode_size;
 };
 
-// Fetch, Decode, Execute
+// Fetch, Decode, Execute ----------------------------------------------------------------------------------------------
 SlimInstruction slim_machine_fetch(SlimMachineState* machine);
 SlimRoutine slim_machine_decode(SlimMachineState* machine, SlimInstruction instruction);
 void slim_machine_execute(SlimMachineState* machine, SlimRoutine routine, SlimInstruction instruction);
@@ -151,6 +153,10 @@ struct SlimInstruction {
     u32_t arg2;
 };
 
+/** --------------------------------------------------------------------------------------------------------------------
+ * @brief A routine is a function that is called when a specific opcode is encountered.
+ * Defined in SlimRoutine.c
+ * -------------------------------------------------------------------------------------------------------------------*/
 void slim_routine_nop(SlimMachineState* machine, SlimInstruction instruction);
 void slim_routine_halt(SlimMachineState* machine, SlimInstruction instruction);
 

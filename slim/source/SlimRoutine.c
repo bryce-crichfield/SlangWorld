@@ -1,6 +1,6 @@
-#include <SlimType.h>
 #include <SlimLog.h>
 #include <SlimMachine.h>
+#include <SlimType.h>
 
 #include <math.h>
 // ---------------------------------------------------------------------------------------------------------------------
@@ -369,7 +369,7 @@ void slim_routine_calln(SlimMachineState* machine, SlimInstruction instruction) 
     slim_machine_except(machine, error);
 
     machine->flags.interrupt = 1;
-    
+
     return;
 }
 // ---------------------------------------------------------------------------------------------------------------------

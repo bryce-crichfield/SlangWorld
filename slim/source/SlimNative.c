@@ -3,22 +3,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 typedef struct SlimNativeFunctionTableEntry {
     u64_t identifier;
     SlimNativeFunction function;
 } SlimNativeFunctionTableEntry;
 
-// Hash Table 
+// Hash Table
 typedef struct SlimNativeFunctionTable {
     SlimNativeFunctionTableEntry* entries;
     u64_t size;
     u64_t capacity;
 } SlimNativeFunctionTable;
 
-u64_t slim_native_hash(u64_t identifier) {
-    return identifier;
-}
+u64_t slim_native_hash(u64_t identifier) { return identifier; }
 
 SlimNativeFunctionTable* slim_native_function_table;
 
@@ -36,10 +33,6 @@ void slim_native_close() {
     free(slim_native_function_table);
 }
 
-SlimError slim_native_get_function(u64_t identifier, SlimNativeFunction* function) {
+SlimError slim_native_get_function(u64_t identifier, SlimNativeFunction* function) {}
 
-}
-
-SlimError slim_native_put_function(u64_t identifier, SlimNativeFunction function) {
-    
-}
+SlimError slim_native_put_function(u64_t identifier, SlimNativeFunction function) {}
