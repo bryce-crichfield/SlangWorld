@@ -6,7 +6,7 @@ DerivePointerAlignment: false
 PointerAlignment: Left
 AlignAfterOpenBracket: DontAlign
 AlignArrayOfStructures: Left
-BreakBeforeBraces: Attach
+BreakBeforeBraces: WebKit
 CompactNamespaces: true
 FixNamespaceComments: true
 KeepEmptyLinesAtTheStartOfBlocks: false

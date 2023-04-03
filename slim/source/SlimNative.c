@@ -19,7 +19,8 @@ u64_t slim_native_hash(u64_t identifier) { return identifier; }
 
 SlimNativeFunctionTable* slim_native_function_table;
 
-SlimError slim_native_init(SlimMachineState* state) {
+SlimError slim_native_init(SlimMachineState* state)
+{
     slim_native_function_table = malloc(sizeof(SlimNativeFunctionTable));
     slim_native_function_table->entries = malloc(sizeof(SlimNativeFunctionTableEntry) * 1024);
     slim_native_function_table->size = 1024;
@@ -28,7 +29,8 @@ SlimError slim_native_init(SlimMachineState* state) {
     return SL_ERROR_NONE;
 }
 
-void slim_native_close() {
+void slim_native_close()
+{
     free(slim_native_function_table->entries);
     free(slim_native_function_table);
 }

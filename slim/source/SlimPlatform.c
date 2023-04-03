@@ -1,14 +1,17 @@
 #include <SlimLog.h>
 #include <SlimMachine.h>
 #include <SlimNative.h>
+#include <SlimBytecode.h>
 #include <SlimPlatform.h>
 
 #include <stdlib.h>
 
 SlimMachineState* slim_platform_machine_instance; // Global Machine State
+SlimBytecode slim_platform_bytecode_instance; // Global Bytecode State
 
 // ---------------------------------------------------------------------------------------------------------------------]
-void slim_platform_init(int argc, char** argv) {
+void slim_platform_init(int argc, char** argv)
+{
     if (argc != 3) {
         slim_log_error("Usage: slim <log file> <bytecode file>\n");
         exit(1);
@@ -27,20 +30,38 @@ void slim_platform_init(int argc, char** argv) {
     slim_machine_reset(slim_platform_machine_instance);
 
     // Load the bytecode file
-    u32_t code_size = 0;
-    u8_t* code = slim_bytecode_load(argv[2], &code_size);
-    if (code == NULL || code_size == 0) {
-        slim_log_error("Failed to load bytecode file: %s\n", argv[2]);
+    SlimBytecodeFile bytecode_file;
+    error = slim_bytecode_file_create(&bytecode_file, argv[2]);
+    if (error != SL_ERROR_NONE) {
+        slim_log_error("Failed to load bytecode file\n");
+        exit(1);
+    }
+
+    // Create the bytecode struct
+    error = slim_bytecode_create(&slim_platform_bytecode_instance, &bytecode_file);
+    if (error != SL_ERROR_NONE) {
+        slim_log_error("Failed to create bytecode struct\n");
+        exit(1);
+    }
+
+    // Destroy the bytecode file
+    error = slim_bytecode_file_destroy(&bytecode_file);
+    if (error != SL_ERROR_NONE) {
+        slim_log_error("Failed to destroy bytecode file\n");
         exit(1);
     }
 
     // Load the bytecode into the machine
-    slim_machine_load(slim_platform_machine_instance, code, code_size);
+    u8_t* code_section;
+    u32_t code_section_size;
+    slim_bytecode_section_code_get(&slim_platform_bytecode_instance, &code_section, &code_section_size);
+    slim_machine_load(slim_platform_machine_instance, code_section, code_section_size);
     // TODO: Bytecode unfreed, because machine takes ownership of underlying data?
     // TODO: Init native code
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_platform_update() {
+void slim_platform_update()
+{
     // Flush the log buffer to the file.  This does cause a constant overhead to the machine and should eventually
     // be made more intelligent to only flush when the buffer is full or when a certain amount of time has passed.
     slim_log_flush();
@@ -90,9 +111,11 @@ void slim_platform_update() {
     slim_machine_step(slim_platform_machine_instance);
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_platform_exit() {
+void slim_platform_exit()
+{
     slim_machine_destroy(slim_platform_machine_instance);
     slim_log_close();
+    slim_bytecode_destroy(&slim_platform_bytecode_instance);
     exit(0);
 }
 // ---------------------------------------------------------------------------------------------------------------------

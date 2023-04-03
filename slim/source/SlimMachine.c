@@ -55,7 +55,8 @@ struct SlimMachineState {
         }                                                                                                              \
     }
 // External API --------------------------------------------------------------------------------------------------------
-SlimMachineState* slim_machine_create() {
+SlimMachineState* slim_machine_create()
+{
     SlimMachineState* machine = malloc(sizeof(SlimMachineState));
     machine->bytecode = NULL;
     machine->bytecode_size = 0;
@@ -63,7 +64,8 @@ SlimMachineState* slim_machine_create() {
     return machine;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_machine_destroy(SlimMachineState* machine) {
+void slim_machine_destroy(SlimMachineState* machine)
+{
     if (machine->bytecode) {
         free(machine->bytecode);
     }
@@ -73,7 +75,8 @@ void slim_machine_destroy(SlimMachineState* machine) {
     free(machine);
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_machine_reset(SlimMachineState* machine) {
+void slim_machine_reset(SlimMachineState* machine)
+{
     for (u32_t i = 0; i < SLIM_MACHINE_OPERAND_STACK_SIZE; i++) {
         machine->operand_stack[i] = 0;
     }
@@ -106,7 +109,8 @@ void slim_machine_reset(SlimMachineState* machine) {
     machine->blocks = slim_machine_block_create(0, SLIM_MACHINE_MEMORY_SIZE);
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_machine_step(SlimMachineState* machine) {
+void slim_machine_step(SlimMachineState* machine)
+{
     // Reset any flags
     machine->flags.interrupt = 0;
     machine->flags.error = 0;
@@ -117,12 +121,14 @@ void slim_machine_step(SlimMachineState* machine) {
     ___slim_machine_execute(machine, routine, instruction);
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_machine_load(SlimMachineState* machine, u8_t* data, u32_t size) {
+void slim_machine_load(SlimMachineState* machine, u8_t* data, u32_t size)
+{
     machine->bytecode = data;
     machine->bytecode_size = size;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_machine_get_flags(SlimMachineState* machine, SlimMachineFlags* flags) {
+void slim_machine_get_flags(SlimMachineState* machine, SlimMachineFlags* flags)
+{
     flags->interrupt = machine->flags.interrupt;
     flags->error = machine->flags.error;
     flags->halt = machine->flags.halt;
@@ -134,7 +140,8 @@ u8_t slim_machine_flag_interrupt_get(SlimMachineState* machine) { return machine
 // ---------------------------------------------------------------------------------------------------------------------
 u8_t slim_machine_flag_halt_get(SlimMachineState* machine) { return machine->flags.halt; }
 // ---------------------------------------------------------------------------------------------------------------------
-u8_t* slim_bytecode_load(const char* filename, u32_t* bytecode_size) {
+u8_t* slim_bytecode_load(const char* filename, u32_t* bytecode_size)
+{
     // Open the file
 
     FILE* file = fopen(filename, "rb");
@@ -169,17 +176,20 @@ u8_t* slim_bytecode_load(const char* filename, u32_t* bytecode_size) {
     return data;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError slim_machine_push(SlimMachineState* machine, u64_t value) {
+SlimError slim_machine_push(SlimMachineState* machine, u64_t value)
+{
     return ___slim_machine_operand_push(machine, value);
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value) {
+SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value)
+{
     return ___slim_machine_operand_pop(machine, value);
 }
 // ---------------------------------------------------------------------------------------------------------------------
 SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value);
 // Internal Routines ---------------------------------------------------------------------------------------------------
-SlimMachineInstruction ___slim_machine_fetch(SlimMachineState* machine) {
+SlimMachineInstruction ___slim_machine_fetch(SlimMachineState* machine)
+{
     SlimMachineInstruction instruction;
     instruction.opcode = machine->bytecode[machine->instruction_pointer];
 
@@ -215,7 +225,8 @@ SlimMachineInstruction ___slim_machine_fetch(SlimMachineState* machine) {
     return instruction;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimMachineRoutine ___slim_machine_decode(SlimMachineState* machine, SlimMachineInstruction instruction) {
+SlimMachineRoutine ___slim_machine_decode(SlimMachineState* machine, SlimMachineInstruction instruction)
+{
     switch (instruction.opcode) {
     case SL_OPCODE_NOOP: return slim_machine_routine_nop; break;
     case SL_OPCODE_HALT: return slim_machine_routine_halt; break;
@@ -251,8 +262,8 @@ SlimMachineRoutine ___slim_machine_decode(SlimMachineState* machine, SlimMachine
     }
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void ___slim_machine_execute(
-    SlimMachineState* machine, SlimMachineRoutine routine, SlimMachineInstruction instruction) {
+void ___slim_machine_execute(SlimMachineState* machine, SlimMachineRoutine routine, SlimMachineInstruction instruction)
+{
     if (routine) {
         routine(machine, instruction);
     } else {
@@ -263,7 +274,8 @@ void ___slim_machine_execute(
 // ---------------------------------------------------------------------------------------------------------------------
 void ___slim_machine_flag_error_raise(SlimMachineState* machine) { machine->flags.error = 1; }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_bytecode_jump(SlimMachineState* machine, u32_t address) {
+SlimError ___slim_machine_bytecode_jump(SlimMachineState* machine, u32_t address)
+{
     if (address >= machine->bytecode_size) {
         slim_log_error("[JUMP]\t\tInvalid address 0x%x\n", address);
         return SLIM_ERROR;
@@ -274,7 +286,8 @@ SlimError ___slim_machine_bytecode_jump(SlimMachineState* machine, u32_t address
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_operand_push(SlimMachineState* machine, u64_t value) {
+SlimError ___slim_machine_operand_push(SlimMachineState* machine, u64_t value)
+{
     if (machine->operand_stack_pointer >= SLIM_MACHINE_OPERAND_STACK_SIZE) {
         return SLIM_ERROR;
     }
@@ -284,7 +297,8 @@ SlimError ___slim_machine_operand_push(SlimMachineState* machine, u64_t value) {
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_operand_pop(SlimMachineState* machine, u64_t* value) {
+SlimError ___slim_machine_operand_pop(SlimMachineState* machine, u64_t* value)
+{
     if (machine->operand_stack_pointer == 0) {
         return SLIM_ERROR;
     }
@@ -297,7 +311,8 @@ SlimError ___slim_machine_operand_pop(SlimMachineState* machine, u64_t* value) {
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_register_load(SlimMachineState* machine, u32_t index) {
+SlimError ___slim_machine_register_load(SlimMachineState* machine, u32_t index)
+{
     if (index >= SLIM_MACHINE_REGISTERS) {
         return SLIM_ERROR;
     }
@@ -311,7 +326,8 @@ SlimError ___slim_machine_register_load(SlimMachineState* machine, u32_t index) 
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_register_store(SlimMachineState* machine, u32_t index) {
+SlimError ___slim_machine_register_store(SlimMachineState* machine, u32_t index)
+{
     if (index >= SLIM_MACHINE_REGISTERS) {
         return SLIM_ERROR;
     }
@@ -327,7 +343,8 @@ SlimError ___slim_machine_register_store(SlimMachineState* machine, u32_t index)
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_memory_read(SlimMachineState* machine, u32_t address, u32_t offset) {
+SlimError ___slim_machine_memory_read(SlimMachineState* machine, u32_t address, u32_t offset)
+{
     u64_t value;
     SlimError error;
 
@@ -342,7 +359,8 @@ SlimError ___slim_machine_memory_read(SlimMachineState* machine, u32_t address, 
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_memory_write(SlimMachineState* machine, u32_t address, u32_t offset) {
+SlimError ___slim_machine_memory_write(SlimMachineState* machine, u32_t address, u32_t offset)
+{
     u64_t value;
     SlimError error;
 
@@ -358,7 +376,8 @@ SlimError ___slim_machine_memory_write(SlimMachineState* machine, u32_t address,
 }
 // ---------------------------------------------------------------------------------------------------------------------
 // TODO: Validate and thouroughly test me
-SlimError ___slim_machine_memory_alloc(SlimMachineState* machine, u32_t size, u32_t* address) {
+SlimError ___slim_machine_memory_alloc(SlimMachineState* machine, u32_t size, u32_t* address)
+{
     SlimMachineBlock* block = machine->blocks;
     while (block != NULL) {
         if (block->allocated == 0 && block->end - block->start >= size) {
@@ -379,7 +398,8 @@ SlimError ___slim_machine_memory_alloc(SlimMachineState* machine, u32_t size, u3
 }
 // ---------------------------------------------------------------------------------------------------------------------
 // TODO: Validate and thouroughly test me
-SlimError ___slim_machine_memory_free(SlimMachineState* machine, u32_t address) {
+SlimError ___slim_machine_memory_free(SlimMachineState* machine, u32_t address)
+{
     SlimMachineBlock* block = machine->blocks;
     while (block != NULL) {
         if (block->start == address) {
@@ -398,7 +418,8 @@ SlimError ___slim_machine_memory_free(SlimMachineState* machine, u32_t address) 
     return SLIM_ERROR;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_function_call(SlimMachineState* machine, u32_t address) {
+SlimError ___slim_machine_function_call(SlimMachineState* machine, u32_t address)
+{
     machine->call_stack_pointer++;
     if (machine->call_stack_pointer >= SLIM_MACHINE_CALL_STACK_SIZE) {
         return SLIM_ERROR;
@@ -410,7 +431,8 @@ SlimError ___slim_machine_function_call(SlimMachineState* machine, u32_t address
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError ___slim_machine_function_ret(SlimMachineState* machine) {
+SlimError ___slim_machine_function_ret(SlimMachineState* machine)
+{
     u32_t ret_address = machine->call_stack[machine->call_stack_pointer].instruction_pointer;
     u16_t count = machine->call_stack[machine->call_stack_pointer].size;
     machine->call_stack[machine->call_stack_pointer].instruction_pointer = 0;
@@ -434,7 +456,8 @@ SlimError ___slim_machine_function_ret(SlimMachineState* machine) {
     return SL_ERROR_NONE;
 }
 // Block Management ----------------------------------------------------------------------------------------------------
-SlimMachineBlock* slim_machine_block_create(u32_t start, u32_t end) {
+SlimMachineBlock* slim_machine_block_create(u32_t start, u32_t end)
+{
     SlimMachineBlock* block = malloc(sizeof(SlimMachineBlock));
     if (block == NULL) {
         return NULL;
@@ -446,14 +469,16 @@ SlimMachineBlock* slim_machine_block_create(u32_t start, u32_t end) {
     return block;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_machine_block_destroy(SlimMachineBlock* block) {
+void slim_machine_block_destroy(SlimMachineBlock* block)
+{
     if (block->next != NULL) {
         slim_machine_block_destroy(block->next);
     }
     free(block);
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError slim_machine_block_split(SlimMachineBlock* block, u32_t size) {
+SlimError slim_machine_block_split(SlimMachineBlock* block, u32_t size)
+{
     if (block->allocated) {
         return SLIM_ERROR;
     }
@@ -473,7 +498,8 @@ SlimError slim_machine_block_split(SlimMachineBlock* block, u32_t size) {
     return SL_ERROR_NONE;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError slim_machine_block_merge(SlimMachineBlock* block) {
+SlimError slim_machine_block_merge(SlimMachineBlock* block)
+{
     if (block->allocated) {
         return SLIM_ERROR;
     }
