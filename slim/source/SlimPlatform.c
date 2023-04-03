@@ -1,7 +1,7 @@
-#include "SlimPlatform.h"
-#include "log/SlimLog.h"
-#include "machine/SlimMachine.h"
-#include "native/SlimNative.h"
+#include <SlimPlatform.h>
+#include <SlimLog.h>
+#include <SlimMachine.h>
+#include <SlimNative.h>
 
 #include <stdlib.h>
 
@@ -16,7 +16,7 @@ void slim_platform_init(int argc, char** argv) {
 
     slim_log_init(argv[1], 1);
 
-    SlimError error = slim_native_init();
+    SlimError error = slim_native_init(slim_platform_machine);
     if (error != SL_ERROR_NONE) {
         slim_log_error("Failed to initialize native code\n");
         exit(1);
@@ -69,15 +69,16 @@ void slim_platform_update() {
             slim_platform_exit();
         }
 
-        SlimNativeFunction native_function;
-        error = slim_native_get_function(native_function_identifier, &native_function);
+        // TODO: Add native interrupt back in
+        // SlimNativeFunction native_function;
+        // error = slim_native_get_function(native_function_identifier, &native_function);
         if (error != SL_ERROR_NONE) {
             slim_log_error(
                 "[INTERRUPT]\tFailed to get native function for identifier: %llu\n", native_function_identifier);
             slim_platform_exit();
         }
 
-        error = native_function(slim_platform_machine);
+        // error = native_function(slim_platform_machine);
         if (error != SL_ERROR_NONE) {
             slim_log_error("[INTERRUPT]\tNative function returned error: %d\n", error);
             slim_platform_exit();

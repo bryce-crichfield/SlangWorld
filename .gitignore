@@ -8,6 +8,7 @@
 /slap/source/grammar/.antlr
 /slap/antlr4.12.0-complete.jar
 /slim/test.log
+/slim/build
 .metals
 
 **/__pycache__

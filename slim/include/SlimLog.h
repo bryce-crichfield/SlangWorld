@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../SlimType.h"
+#include <SlimType.h>
 
 // Debugging and Diagnostics -------------------------------------------------------------------------------------------
 #define SLIM_LOG_BUFFER_SIZE 1024

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SlimType.h"
+#include <SlimType.h>
 
 // ---------------------------------------------------------------------------------------------------------------------
 // The Slim Platform is the interface between the Slim API and the host platform. It manages the internal components

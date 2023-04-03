@@ -1,6 +1,6 @@
-#include "../SlimType.h"
-#include "../log/SlimLog.h"
-#include "SlimMachine.h"
+#include <SlimType.h>
+#include <SlimLog.h>
+#include <SlimMachine.h>
 
 #include <math.h>
 // ---------------------------------------------------------------------------------------------------------------------

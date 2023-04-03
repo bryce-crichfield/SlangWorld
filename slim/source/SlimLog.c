@@ -1,4 +1,4 @@
-#include "SlimLog.h"
+#include <SlimLog.h>
 
 #include <stdio.h>
 #include <stdlib.h>

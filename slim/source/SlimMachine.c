@@ -1,5 +1,5 @@
-#include "SlimMachine.h"
-#include "../log/SlimLog.h"
+#include <SlimMachine.h>
+#include <SlimLog.h>
 
 #include <stdarg.h>
 // ---------------------------------------------------------------------------------------------------------------------

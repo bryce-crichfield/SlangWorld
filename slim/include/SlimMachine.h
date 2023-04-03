@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../SlimType.h"
+#include <SlimType.h>
 
 #include <stdio.h>
 #include <stdlib.h>
