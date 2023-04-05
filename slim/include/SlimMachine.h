@@ -24,7 +24,6 @@ struct SlimMachineInstruction {
     u32_t arg1;
     u32_t arg2;
 };
-typedef struct SlimBytecode SlimBytecode;
 typedef enum SlimOpcode SlimOpcode;
 typedef enum SlimRuntimeCastArg SlimRuntimeCastArg;
 typedef struct SlimMachineBlock SlimMachineBlock;
