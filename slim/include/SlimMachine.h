@@ -1,6 +1,8 @@
 #pragma once
 
+#include <SlimLog.h>
 #include <SlimType.h>
+#include <SlimBytecode.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +17,7 @@
  *  3. Memory management - providing simplified access to the operand stack (primarily for native functions)
  * ------------------------------------------------------------------------------------------------------------------ */
 
-typedef struct SlimMachineState SlimMachineState;
+typedef struct SlimMachineState* SlimMachineState;
 typedef struct SlimMachineFlags SlimMachineFlags;
 typedef struct SlimMachineStackFrame SlimMachineStackFrame;
 typedef struct SlimMachineInstruction SlimMachineInstruction;
@@ -27,24 +29,21 @@ struct SlimMachineInstruction {
 typedef enum SlimOpcode SlimOpcode;
 typedef enum SlimRuntimeCastArg SlimRuntimeCastArg;
 typedef struct SlimMachineBlock SlimMachineBlock;
-typedef void (*SlimMachineRoutine)(SlimMachineState* machine, SlimMachineInstruction instruction);
+typedef void (*SlimMachineRoutine)(SlimMachineState machine, SlimMachineInstruction instruction);
 
-// TODO: Find me a better home when native code is implemented
-u8_t* slim_bytecode_load(const char* filename, u32_t* size);
+SlimMachineState slim_machine_create(SlimLogContext* log_context);
+void slim_machine_reset(SlimMachineState machine);
+void slim_machine_destroy(SlimMachineState machine);
 
-SlimMachineState* slim_machine_create();
-void slim_machine_reset(SlimMachineState* machine);
-void slim_machine_destroy(SlimMachineState* machine);
+void slim_machine_step(SlimMachineState machine, SlimBytecodeTable bytecode_table);
+void slim_machine_load(SlimMachineState machine, u8_t* data, u32_t size);
 
-void slim_machine_step(SlimMachineState* machine);
-void slim_machine_load(SlimMachineState* machine, u8_t* data, u32_t size);
+u8_t slim_machine_flag_get_error(SlimMachineState machine);
+u8_t slim_machine_flag_get_interrupt(SlimMachineState machine);
+u8_t slim_machine_flag_get_halt(SlimMachineState machine);
 
-u8_t slim_machine_flag_error_get(SlimMachineState* machine);
-u8_t slim_machine_flag_interrupt_get(SlimMachineState* machine);
-u8_t slim_machine_flag_halt_get(SlimMachineState* machine);
-
-SlimError slim_machine_push(SlimMachineState* machine, u64_t value);
-SlimError slim_machine_pop(SlimMachineState* machine, u64_t* value);
+SlimError slim_machine_push(SlimMachineState machine, u64_t value);
+SlimError slim_machine_pop(SlimMachineState machine, u64_t* value);
 
 // Logic and Control Flow - Instructions, Routines, and Opcodes --------------------------------------------------------
 // This is public because it is shared with the intermediate representation produced by the compiler
@@ -103,58 +102,57 @@ enum SlimOpcode {
  * and the management of the machine's memory.
  * ------------------------------------------------------------------------------------------------------------------ */
 
-SlimMachineInstruction ___slim_machine_fetch(SlimMachineState* machine);
-SlimMachineRoutine ___slim_machine_decode(SlimMachineState* machine, SlimMachineInstruction instruction);
-void ___slim_machine_execute(SlimMachineState* machine, SlimMachineRoutine routine, SlimMachineInstruction instruction);
+SlimMachineInstruction ___slim_machine_fetch(SlimMachineState machine, SlimBytecodeTable bytecode_table);
+SlimMachineRoutine ___slim_machine_decode(SlimMachineState machine, SlimMachineInstruction instruction);
+void ___slim_machine_execute(SlimMachineState machine, SlimMachineRoutine routine, SlimMachineInstruction instruction);
 
-void ___slim_machine_flag_error_raise(SlimMachineState* machine);
-SlimError ___slim_machine_bytecode_jump(SlimMachineState* machine, u32_t address);
-SlimError ___slim_machine_operand_push(SlimMachineState* machine, u64_t value);
-SlimError ___slim_machine_operand_pop(SlimMachineState* machine, u64_t* value);
-SlimError ___slim_machine_register_load(SlimMachineState* machine, u32_t register);
-SlimError ___slim_machine_register_store(SlimMachineState* machine, u32_t register);
-SlimError ___slim_machine_memory_read(SlimMachineState* machine, u32_t address, u32_t offset);
-SlimError ___slim_machine_memory_write(SlimMachineState* machine, u32_t address, u32_t offset);
-SlimError ___slim_machine_memory_alloc(SlimMachineState* machine, u32_t size, u32_t* address);
-SlimError ___slim_machine_memory_free(SlimMachineState* machine, u32_t address);
-SlimError ___slim_machine_function_call(SlimMachineState* machine, u32_t address);
-SlimError ___slim_machine_function_ret(SlimMachineState* machine);
+void ___slim_machine_flag_error_raise(SlimMachineState machine);
+SlimError ___slim_machine_bytecode_jump(SlimMachineState machine, u32_t address);
+SlimError ___slim_machine_operand_push(SlimMachineState machine, u64_t value);
+SlimError ___slim_machine_operand_pop(SlimMachineState machine, u64_t* value);
+SlimError ___slim_machine_register_load(SlimMachineState machine, u32_t register);
+SlimError ___slim_machine_register_store(SlimMachineState machine, u32_t register);
+SlimError ___slim_machine_memory_read(SlimMachineState machine, u32_t address, u32_t offset);
+SlimError ___slim_machine_memory_write(SlimMachineState machine, u32_t address, u32_t offset);
+SlimError ___slim_machine_memory_alloc(SlimMachineState machine, u32_t size, u32_t* address);
+SlimError ___slim_machine_memory_free(SlimMachineState machine, u32_t address);
+SlimError ___slim_machine_function_call(SlimMachineState machine, u32_t address);
+SlimError ___slim_machine_function_ret(SlimMachineState machine);
 
 /** --------------------------------------------------------------------------------------------------------------------
  * @brief A routine is a function that is called when a specific opcode is encountered.
  * Defined in SlimRoutine.c
  * ------------------------------------------------------------------------------------------------------------------ */
-
-void slim_machine_routine_nop(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_halt(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_loadi(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_loadr(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_loadm(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_drop(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_storer(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_routine_storem(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_dup(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_swap(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_rot(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_add(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_sub(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_mul(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_div(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_mod(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_addf(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_subf(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_mulf(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_divf(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_modf(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_alloc(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_free(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_jmp(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_jne(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_je(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_call(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_ret(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_calln(SlimMachineState* machine, SlimMachineInstruction instruction);
-void slim_machine_routine_cast(SlimMachineState* machine, SlimMachineInstruction instruction);
+void slim_machine_routine_nop(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_halt(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_loadi(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_loadr(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_loadm(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_drop(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_storer(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_storem(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_dup(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_swap(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_rot(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_add(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_sub(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_mul(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_div(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_mod(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_addf(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_subf(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_mulf(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_divf(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_modf(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_alloc(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_free(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_jmp(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_jne(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_je(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_call(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_ret(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_calln(SlimMachineState machine, SlimMachineInstruction instruction);
+void slim_machine_routine_cast(SlimMachineState machine, SlimMachineInstruction instruction);
 
 // Block and Memory Management -----------------------------------------------------------------------------------------
 

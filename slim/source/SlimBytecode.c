@@ -1,14 +1,15 @@
 #include <SlimBytecode.h>
 #include <SlimData.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+// ---------------------------------------------------------------------------------------------------------------------
 struct SlimBytecodeData {
     u8_t* data;
     u32_t size;
 };
-
+// ---------------------------------------------------------------------------------------------------------------------
 struct SlimBytecodeTable {
     SlimVector natives;
     SlimVector strings;
@@ -27,9 +28,9 @@ struct SlimBytecodeTable {
     u32_t constant_offset;
     u32_t instruction_offset;
 };
-
-
-SlimBytecodeData slim_bytecode_data_create(u8_t *data, u32_t size) {
+// ---------------------------------------------------------------------------------------------------------------------
+SlimBytecodeData slim_bytecode_data_create(u8_t* data, u32_t size)
+{
     SlimBytecodeData bytecode = malloc(sizeof(struct SlimBytecodeData));
 
     bytecode->data = malloc(size);
@@ -41,17 +42,18 @@ SlimBytecodeData slim_bytecode_data_create(u8_t *data, u32_t size) {
 
     return bytecode;
 }
-
-
-void slim_bytecode_data_destroy(SlimBytecodeData bytecode) {
+// ---------------------------------------------------------------------------------------------------------------------
+void slim_bytecode_data_destroy(SlimBytecodeData bytecode)
+{
     if (bytecode == NULL) return;
 
     free(bytecode->data);
     free(bytecode);
     bytecode = NULL;
 }
-
-SlimBytecodeTable slim_bytecode_table_create() {
+// ---------------------------------------------------------------------------------------------------------------------
+SlimBytecodeTable slim_bytecode_table_create()
+{
     SlimBytecodeTable table = malloc(sizeof(struct SlimBytecodeTable));
 
     table->natives = slim_vector_create(sizeof(char*));
@@ -61,33 +63,33 @@ SlimBytecodeTable slim_bytecode_table_create() {
 
     return table;
 }
+// ---------------------------------------------------------------------------------------------------------------------
+void __char_destroy(void* data) { free(*(char**)data); }
 
-void __char_destroy(void* data) {
-    free(*(char**)data);
-}
-
-void slim_bytecode_table_destroy(SlimBytecodeTable table) {
+void slim_bytecode_table_destroy(SlimBytecodeTable table)
+{
     if (table == NULL) return;
 
     slim_vector_destroy(table->natives, __char_destroy);
     slim_vector_destroy(table->strings, __char_destroy);
     slim_vector_destroy(table->constants, NULL);
     slim_vector_destroy(table->instructions, NULL);
+
     free(table);
     table = NULL;
 }
 
-u16_t ___slim_u16_t_reverse(u16_t value) {
-    return (value & 0x00FF) << 8 | (value & 0xFF00) >> 8;
-}
+u16_t ___slim_u16_t_reverse(u16_t value) { return (value & 0x00FF) << 8 | (value & 0xFF00) >> 8; }
 
-u32_t ___slim_u32_t_reverse(u32_t value) {
-    return (value & 0x000000FF) << 24 | (value & 0x0000FF00) << 8 | (value & 0x00FF0000) >> 8 | (value & 0xFF000000) >> 24;
+u32_t ___slim_u32_t_reverse(u32_t value)
+{
+    return (value & 0x000000FF) << 24 | (value & 0x0000FF00) << 8 | (value & 0x00FF0000) >> 8 |
+           (value & 0xFF000000) >> 24;
 }
 
 // Data -> Table
-SlimError slim_bytecode_table_load_data_header(SlimBytecodeTable table, SlimBytecodeData data) {
-
+SlimError slim_bytecode_table_load_data_header(SlimBytecodeTable table, SlimBytecodeData data)
+{
     if (data->size < 32) return SLIM_ERROR;
 
     u32_t position = 0;
@@ -112,7 +114,7 @@ SlimError slim_bytecode_table_load_data_header(SlimBytecodeTable table, SlimByte
     memcpy(&table->instruction_size, data->data + position, sizeof(table->instruction_size));
     position += sizeof(table->instruction_size);
     table->instruction_size = ___slim_u32_t_reverse(table->instruction_size);
-    
+
     table->header_offset = 0;
     table->native_offset = table->header_size;
     table->string_offset = table->native_offset + table->native_size;
@@ -122,7 +124,8 @@ SlimError slim_bytecode_table_load_data_header(SlimBytecodeTable table, SlimByte
     return SL_ERROR_NONE;
 }
 
-SlimError slim_bytecode_table_load_data_native(SlimBytecodeTable table, SlimBytecodeData data) {
+SlimError slim_bytecode_table_load_data_native(SlimBytecodeTable table, SlimBytecodeData data)
+{
     // Each entry in the native table is composed of a 2 byte length followed by the null-terminated string.
 
     u32_t position = table->native_offset;
@@ -145,19 +148,20 @@ SlimError slim_bytecode_table_load_data_native(SlimBytecodeTable table, SlimByte
     return SL_ERROR_NONE;
 }
 
-SlimError slim_bytecode_table_load_data_string(SlimBytecodeTable table, SlimBytecodeData data) {
+SlimError slim_bytecode_table_load_data_string(SlimBytecodeTable table, SlimBytecodeData data) { return SL_ERROR_NONE; }
+
+SlimError slim_bytecode_table_load_data_constant(SlimBytecodeTable table, SlimBytecodeData data)
+{
     return SL_ERROR_NONE;
 }
 
-SlimError slim_bytecode_table_load_data_constant(SlimBytecodeTable table, SlimBytecodeData data) {
+SlimError slim_bytecode_table_load_data_instruction(SlimBytecodeTable table, SlimBytecodeData data)
+{
     return SL_ERROR_NONE;
 }
 
-SlimError slim_bytecode_table_load_data_instruction(SlimBytecodeTable table, SlimBytecodeData data) {
-    return SL_ERROR_NONE;
-}
-
-SlimError slim_bytecode_table_load_data(SlimBytecodeTable table, SlimBytecodeData data) {
+SlimError slim_bytecode_table_load_data(SlimBytecodeTable table, SlimBytecodeData data)
+{
     SlimError error = SL_ERROR_NONE;
 
     error = slim_bytecode_table_load_data_header(table, data);
@@ -178,65 +182,53 @@ SlimError slim_bytecode_table_load_data(SlimBytecodeTable table, SlimBytecodeDat
     return error;
 }
 
-// Table -> Data
-// SlimError slim_bytecode_data_load_table_header(SlimBytecodeData data, SlimBytecodeTable tables);
-// SlimError slim_bytecode_data_load_table_native(SlimBytecodeData data, SlimBytecodeTable tables);
-// SlimError slim_bytecode_data_load_table_string(SlimBytecodeData data, SlimBytecodeTable tables);
-// SlimError slim_bytecode_data_load_table_constant(SlimBytecodeData data, SlimBytecodeTable tables);
-// SlimError slim_bytecode_data_load_table_instruction(SlimBytecodeData data, SlimBytecodeTable tables);
-
 // Accessors
-u32_t slim_bytecode_table_get_header_size(SlimBytecodeTable table) {
-    return table->header_size;
-}
+u32_t slim_bytecode_table_get_size_header(SlimBytecodeTable table) { return table->header_size; }
+u32_t slim_bytecode_table_get_size_natives(SlimBytecodeTable table) { return table->native_size; }
+u32_t slim_bytecode_table_get_size_strings(SlimBytecodeTable table) { return table->string_size; }
+u32_t slim_bytecode_table_get_size_constants(SlimBytecodeTable table) { return table->constant_size; }
+u32_t slim_bytecode_table_get_size_instrs(SlimBytecodeTable table) { return table->instruction_size; }
 
-u32_t slim_bytecode_table_get_native_size(SlimBytecodeTable table) {
-    return table->native_size;
-}
+u32_t slim_bytecode_table_get_offset_header(SlimBytecodeTable table) { return table->header_offset; }
+u32_t slim_bytecode_table_get_offset_natives(SlimBytecodeTable table) { return table->native_offset; }
+u32_t slim_bytecode_table_get_offset_strings(SlimBytecodeTable table) { return table->string_offset; }
+u32_t slim_bytecode_table_get_offset_constants(SlimBytecodeTable table) { return table->constant_offset; }
+u32_t slim_bytecode_table_get_offset_instrs(SlimBytecodeTable table) { return table->instruction_offset; }
 
-u32_t slim_bytecode_table_get_string_size(SlimBytecodeTable table) {
-    return table->string_size;
-}
-
-u32_t slim_bytecode_table_get_constant_size(SlimBytecodeTable table) {
-    return table->constant_size;
-}
-
-u32_t slim_bytecode_table_get_instruction_size(SlimBytecodeTable table) {
-    return table->instruction_size;
-}
-
-u32_t slim_bytecode_table_get_header_offset(SlimBytecodeTable table) {
-    return table->header_offset;
-}
-
-u32_t slim_bytecode_table_get_native_offset(SlimBytecodeTable table) {
-    return table->native_offset;
-}
-u32_t slim_bytecode_table_get_string_offset(SlimBytecodeTable table) {
-    return table->string_offset;
-}
-
-u32_t slim_bytecode_table_get_constant_offset(SlimBytecodeTable table) {
-    return table->constant_offset;
-}
-
-u32_t slim_bytecode_table_get_instruction_offset(SlimBytecodeTable table) {
-    return table->instruction_offset;
-}
-
-SlimError slim_bytecode_table_lookup_native(SlimBytecodeTable table, u64_t index, char** string) {
+SlimError slim_bytecode_table_lookup_native(SlimBytecodeTable table, u64_t index, char** string)
+{
     if (index >= slim_vector_size(table->natives)) return SLIM_ERROR;
 
-    char* native;
-    slim_vector_access(table->natives, index, &native);
+    char* accessed;
+    slim_vector_access(table->natives, index, &accessed);
 
-    printf("Native: %s\n", native);
+    printf("Native: %s\n", accessed);
 
-    *string = native;
+    *string = accessed;
 
     return SL_ERROR_NONE;
 }
-// SlimError slim_bytecode_table_lookup_string(SlimBytecodeTable table, u64_t index, char* string);
-// SlimError slim_bytecode_table_lookup_constant(SlimBytecodeTable table, u64_t index, u64_t* constant);
-// SlimError slim_bytecode_table_lookup_instruction(SlimBytecodeTable table, u64_t index, SlimBytecodeInstruction* instr);
+
+SlimError slim_bytecode_table_lookup_string(SlimBytecodeTable table, u64_t index, char** string)
+{
+    if (index >= slim_vector_size(table->strings)) return SLIM_ERROR;
+
+    char* accessed;
+    slim_vector_access(table->strings, index, &accessed);
+
+    printf("Native: %s\n", accessed);
+
+    *string = accessed;
+
+    return SL_ERROR_NONE;
+}
+
+SlimError slim_bytecode_table_lookup_constant(SlimBytecodeTable table, u64_t index, u64_t* constant)
+{
+    return SL_ERROR_NONE;
+}
+
+SlimError slim_bytecode_table_lookup_instruction(SlimBytecodeTable table, u64_t index, SlimBytecodeInstruction* instr)
+{
+    return SL_ERROR_NONE;
+}

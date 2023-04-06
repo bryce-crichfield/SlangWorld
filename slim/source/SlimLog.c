@@ -3,96 +3,93 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Debugging -----------------------------------------------------------------------------------------------------------
-typedef struct SlimLogContext {
+// ---------------------------------------------------------------------------------------------------------------------
+struct SlimLogContext {
     const char* output_path;
     char buffer[SLIM_LOG_BUFFER_SIZE];
     u16_t buffer_index;
     u8_t writes_stdout;
-} SlimLogContext;
+};
 // ---------------------------------------------------------------------------------------------------------------------
-static SlimLogContext* slim_log_context = NULL;
-// ---------------------------------------------------------------------------------------------------------------------
-void slim_log_init(const char* output_path, u8_t writes_stdout)
+SlimLogContext slim_log_create(const char* output_path, u8_t writes_stdout)
 {
+    SlimLogContext slim_log_context = malloc(sizeof(SlimLogContext));
     slim_log_context = malloc(sizeof(SlimLogContext));
     slim_log_context->output_path = output_path;
     slim_log_context->buffer_index = 0;
     slim_log_context->writes_stdout = writes_stdout;
+
+    return slim_log_context;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_log_flush()
+void slim_log_flush(SlimLogContext log)
 {
-    FILE* file = fopen(slim_log_context->output_path, "a");
-    fwrite(slim_log_context->buffer, 1, slim_log_context->buffer_index, file);
+    FILE* file = fopen(log->output_path, "a");
+    fwrite(log->buffer, 1, log->buffer_index, file);
     fclose(file);
-    slim_log_context->buffer_index = 0;
+    log->buffer_index = 0;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_log_close()
+void slim_log_destroy(SlimLogContext log)
 {
-    slim_log_flush();
-    free(slim_log_context);
+    if (log == NULL) return;
+    slim_log_flush(log);
+    free(log);
+    log = NULL;
 }
 // ---------------------------------------------------------------------------------------------------------------------
-SlimError slim_log_check_error()
+void slim_log_printf(SlimLogContext log, const char* format, ...)
 {
-    // TODO: Implement
-    return SL_ERROR_NONE;
-}
-// ---------------------------------------------------------------------------------------------------------------------
-void slim_log_printf(const char* format, ...)
-{
-    if (slim_log_context == NULL) {
+    if (log == NULL) {
         return;
     }
 
     va_list args;
     va_start(args, format);
-    slim_log_context->buffer_index += vsprintf(slim_log_context->buffer + slim_log_context->buffer_index, format, args);
+    log->buffer_index += vsprintf(log->buffer + log->buffer_index, format, args);
     va_end(args);
 
-    if (slim_log_context->writes_stdout) {
+    if (log->writes_stdout) {
         va_list args;
         va_start(args, format);
         vprintf(format, args);
         va_end(args);
     }
 
-    if (slim_log_context->buffer_index > SLIM_LOG_BUFFER_SIZE) {
-        slim_log_flush();
+    if (log->buffer_index > SLIM_LOG_BUFFER_SIZE) {
+        slim_log_flush(log);
     }
 }
 // ---------------------------------------------------------------------------------------------------------------------
-void slim_log_hexdump(void* data, u32_t length, u32_t stride, u8_t is_sparse)
+void slim_log_hexdump(SlimLogContext log, void* data, u32_t length, u32_t stride, u8_t is_sparse)
 {
-    slim_log_printf("\nHexdump (%d bytes):\n", length);
+    slim_log_printf(log, "\nHexdump (%d bytes):\n", length);
 
     // Print Header Row
-    slim_log_printf("ROW    \tBYTE\t");
+    slim_log_printf(log, "ROW    \tBYTE\t");
     for (u8_t i = 0; i < stride; i++) {
-        slim_log_printf("0%x ", i);
+        slim_log_printf(log, "0%x ", i);
     }
-    slim_log_printf("\n");
+    slim_log_printf(log, "\n");
 
     // Print the Contents
     for (int row = 0; row < length; row++) {
         // Print Index and Byte Offset
-        slim_log_printf("%04d\t", row);
-        slim_log_printf("0x%04hhX\t", row * stride);
+        slim_log_printf(log, "%04d\t", row);
+        slim_log_printf(log, "0x%04hhX\t", row * stride);
 
         // Print the Bytes
         for (int byte = stride - 1; byte >= 0; byte--) {
             u8_t value = ((u8_t*)data)[row * stride + byte];
             if (is_sparse && value == 0) {
-                slim_log_printf(".. ");
+                slim_log_printf(log, ".. ");
             } else {
-                slim_log_printf("%x ", value);
+                slim_log_printf(log, "%x ", value);
             }
         }
 
-        slim_log_printf("\n");
+        slim_log_printf(log, "\n");
     }
-    slim_log_printf("\n");
+    slim_log_printf(log, "\n");
 }
 // ---------------------------------------------------------------------------------------------------------------------

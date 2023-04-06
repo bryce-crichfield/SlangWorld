@@ -1,7 +1,7 @@
 #pragma once
 
-#include <SlimNativeInterface.h>
 #include <SlimMachine.h>
+#include <SlimNativeInterface.h>
 #include <SlimType.h>
 
 /** Basically we need an abstraction over top of the SLIM platform
@@ -14,11 +14,11 @@
  *  the SlimVM through the SlimNative interface.
  */
 
-typedef SlimError(*SlimNativeFunction)();
+typedef SlimError (*SlimNativeFunction)();
 
-// The implication... slim native is static, and slim machine state isn't technically but it in virtue of 
+// The implication... slim native is static, and slim machine state isn't technically but it in virtue of
 // slim platform... some smelly shit going on here with *implicit* globalization of SlimMachineState
-SlimError slim_native_init(SlimMachineState* state);
+SlimError slim_native_init(SlimMachineState state);
 
 // Statically close the submodule... (little whack don't like but hey it's simpleq)
 void slim_native_close();

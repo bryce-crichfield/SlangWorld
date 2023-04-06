@@ -20,5 +20,5 @@ SlimError slim_file_read(const char* filename, u8_t **data, u32_t *size) {
 
     fclose(file);
 
-    return SL_ERROR_NONE
+    return SL_ERROR_NONE;
 }

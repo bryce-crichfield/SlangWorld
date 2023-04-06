@@ -1,3 +1,4 @@
+#include <SlimPlatform.h>
 #include <SlimBytecode.h>
 #include <SlimData.h>
 #include <SlimFile.h>
@@ -66,34 +67,34 @@ void testBytecode()
         goto exit;
     }
 
-    u32_t header_size = slim_bytecode_table_get_header_size(table);
+    u32_t header_size = slim_bytecode_table_get_size_header(table);
     printf("header_size: %d\n", header_size);
-    
-    u32_t native_size = slim_bytecode_table_get_native_size(table);
+
+    u32_t native_size = slim_bytecode_table_get_size_natives(table);
     printf("native_size: %d\n", native_size);
 
-    u32_t string_size = slim_bytecode_table_get_string_size(table);
+    u32_t string_size = slim_bytecode_table_get_size_strings(table);
     printf("string_size: %d\n", string_size);
 
-    u32_t constant_size = slim_bytecode_table_get_constant_size(table);
+    u32_t constant_size = slim_bytecode_table_get_size_constants(table);
     printf("constant_size: %d\n", constant_size);
 
-    u32_t instruction_size = slim_bytecode_table_get_instruction_size(table);
+    u32_t instruction_size = slim_bytecode_table_get_size_instrs(table);
     printf("instruction_size: %d\n", instruction_size);
 
-    u32_t header_offset = slim_bytecode_table_get_header_offset(table);
+    u32_t header_offset = slim_bytecode_table_get_offset_header(table);
     printf("header_offset: %d\n", header_offset);
 
-    u32_t native_offset = slim_bytecode_table_get_native_offset(table);
+    u32_t native_offset = slim_bytecode_table_get_offset_natives(table);
     printf("native_offset: %d\n", native_offset);
 
-    u32_t string_offset = slim_bytecode_table_get_string_offset(table);
+    u32_t string_offset = slim_bytecode_table_get_offset_strings(table);
     printf("string_offset: %d\n", string_offset);
 
-    u32_t constant_offset = slim_bytecode_table_get_constant_offset(table);
+    u32_t constant_offset = slim_bytecode_table_get_offset_constants(table);
     printf("constant_offset: %d\n", constant_offset);
 
-    u32_t instruction_offset = slim_bytecode_table_get_instruction_offset(table);
+    u32_t instruction_offset = slim_bytecode_table_get_offset_instrs(table);
     printf("instruction_offset: %d\n", instruction_offset);
 
     char* string;
@@ -113,11 +114,17 @@ exit:
     return;
 }
 
-int main(void)
+void testPlatform(int argc, char** argv) {
+    SlimPlatform platform = slim_platform_create(argc, argv);
+    
+    slim_platform_destroy(platform);
+}
+
+int main(int argc, char** argv)
 {
     testSlimArray();
     testFileLoading();
     testBytecode();
-
+    testPlatform(argc, argv);
     return 0;
 }

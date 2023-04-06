@@ -16,12 +16,15 @@ typedef struct SlimBytecodeData* SlimBytecodeData;
 
 typedef struct SlimBytecodeTable* SlimBytecodeTable;
 
+// TODO: Unify with SlimMachineInstruction, they are essentially redundant
 typedef struct SlimBytecodeInstruction {
     u8_t opcode;
     u64_t operand;
 } SlimBytecodeInstruction;
 
-SlimBytecodeData slim_bytecode_data_create(u8_t *data, u32_t size);
+SlimError slim_bytecode_file_load(const char* path, SlimBytecodeTable *dest);
+
+SlimBytecodeData slim_bytecode_data_create(u8_t* data, u32_t size);
 void slim_bytecode_data_destroy(SlimBytecodeData bytecode);
 
 SlimBytecodeTable slim_bytecode_table_create();
@@ -33,29 +36,22 @@ SlimError slim_bytecode_table_load_data_native(SlimBytecodeTable table, SlimByte
 SlimError slim_bytecode_table_load_data_string(SlimBytecodeTable table, SlimBytecodeData data);
 SlimError slim_bytecode_table_load_data_constant(SlimBytecodeTable table, SlimBytecodeData data);
 SlimError slim_bytecode_table_load_data_instruction(SlimBytecodeTable table, SlimBytecodeData data);
-
 SlimError slim_bytecode_table_load_data(SlimBytecodeTable table, SlimBytecodeData data);
 
-// Table -> Data
-SlimError slim_bytecode_data_load_table_header(SlimBytecodeData data, SlimBytecodeTable tables);
-SlimError slim_bytecode_data_load_table_native(SlimBytecodeData data, SlimBytecodeTable tables);
-SlimError slim_bytecode_data_load_table_string(SlimBytecodeData data, SlimBytecodeTable tables);
-SlimError slim_bytecode_data_load_table_constant(SlimBytecodeData data, SlimBytecodeTable tables);
-SlimError slim_bytecode_data_load_table_instruction(SlimBytecodeData data, SlimBytecodeTable tables);
-
 // Accessors
-u32_t slim_bytecode_table_get_header_size(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_native_size(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_string_size(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_constant_size(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_instruction_size(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_size_header(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_size_natives(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_size_strings(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_size_constants(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_size_instrs(SlimBytecodeTable table);
 
-u32_t slim_bytecode_table_get_header_offset(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_native_offset(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_string_offset(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_constant_offset(SlimBytecodeTable table);
-u32_t slim_bytecode_table_get_instruction_offset(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_offset_header(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_offset_natives(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_offset_strings(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_offset_constants(SlimBytecodeTable table);
+u32_t slim_bytecode_table_get_offset_instrs(SlimBytecodeTable table);
 
+// Lookup
 SlimError slim_bytecode_table_lookup_native(SlimBytecodeTable table, u64_t index, char** string);
 SlimError slim_bytecode_table_lookup_string(SlimBytecodeTable table, u64_t index, char** string);
 SlimError slim_bytecode_table_lookup_constant(SlimBytecodeTable table, u64_t index, u64_t* constant);
