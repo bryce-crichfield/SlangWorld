@@ -1,4 +1,2 @@
 # SlangWorld
-### An attempt to construct a 64-bit virtual machine with assembled and interpreted bytecode.
-### [ STATUS ] Defunct
-### [ NOTES  ] Over abstraction in a language poorly suited leads to complexity and overhead.
+A 64-bit general purpose language named SLang with host bytecode pal named SLIM (SL intermediate).
